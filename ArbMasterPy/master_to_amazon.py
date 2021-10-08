@@ -1,14 +1,35 @@
-import xlwings as xw
-import io
-import openpyxl
-import shutil
 import PySimpleGUI as sg
-import sys
-import os
-from Excelutilities import importing_data_helpers 
-from Excelutilities import index_helpers
-import pkg_resources
- 
+
+
+
+def return_existing_asins(inventory_sht):
+    """
+    given the inventory sheet (as an xlwings sheet object), returns a set of asins in the inventory sheet
+    """
+    asin_rows_to_index = {"asin1":16,"asin2":17,"asin3":18}
+    row_num = inventory_sht.range('A1').current_region.last_cell.row
+    existing_asins = set()
+
+    if row_num == 1:
+        return existing_asins
+    
+    values = inventory_sht.range("A2:AE"+str(row_num)).value
+
+    if row_num == 2:
+        values = [values] #this is because we assume values is a list of lists,
+        #but if there is only one row, 
+
+    for row in values:
+        asin_rows_index = [asin_rows_to_index["asin1"], asin_rows_to_index["asin2"], asin_rows_to_index["asin3"]]
+        for index in asin_rows_index:    
+            if row[index] != None:
+                existing_asins.add(row[index])
+            else:
+                pass    
+    return existing_asins
+
+
+
 
 def export_data():
     product_id_types = {"ASIN":1,
@@ -24,7 +45,7 @@ def export_data():
     col_names_to_indices = {"PRODUCT NAME":0, "ASIN":1, "ISBN":2, "UPC":3, "EAN":4, "SKU":5, "PURCHASE PRICE":6, 
                             "Qty":7, "ORDER DATE":8, "CONDITION":9, "PRICE":10}
     to_read_after_product_id = ["SKU","PURCHASE PRICE", "Qty", "ORDER DATE", "CONDITION", "PRICE"]
-
+    import xlwings as xw
     default_file_loc = xw.apps.active.books.active.fullname
     layout = [[sg.Text('Select the file location of the master sheet'), sg.Input(default_file_loc),sg.FileBrowse(key="--input_file--")],
                 [sg.OK(), sg.Cancel()]]
@@ -32,21 +53,30 @@ def export_data():
 
     xlsx_filename=values[0]
     
+    import io
+
     with open(xlsx_filename, "rb") as f:
         #this needs to be done as well as wb.close to make sure the workbook doesnt get broken by saving and other actions
         
         in_mem_file = io.BytesIO(f.read())
+
+    import openpyxl
 
     wb = openpyxl.load_workbook(in_mem_file, read_only=True)
 
     master_sheet = wb["Master"]
 
     sg.popup_ok(f"Please select the product keys for the items you wish to upload")
+
+
     current_address = xw.apps.active.books.active.selection.address
+
+    from Excelutilities import index_helpers
 
     while index_helpers.is_from_single_col(current_address) == False:
         user_output = sg.popup_yes_no("Please select from a single column block.\nClick Yes to continue and reselect, or No to terminate the program")
         if user_output == "No":
+            import sys
             sys.exit()
         else:
             current_address = xw.apps.active.books.active.selection.address
@@ -123,29 +153,41 @@ def export_data():
     internal_names_to_output_names = {"id_type":"product-id-type", "SKU":"sku", "CONDITION":"item-condition", "PRICE":"price"}
     output_names_to_internal_names = reversed_dict(internal_names_to_output_names)
 
+    import pkg_resources
+
     AMAZON_MASTER_FILE = pkg_resources.resource_filename('ArbMasterPy', 'data/Amazon standard inventory - flat file.xlsm')
     src_path = AMAZON_MASTER_FILE
     layout = [[sg.Text('Select the output location of your master sheet'), sg.Input(),sg.FolderBrowse(key="--input_file--")],
                 [sg.OK(), sg.Cancel()]]
     event, values = sg.Window("",layout, no_titlebar=False, keep_on_top=True, grab_anywhere=True).read(close=True)
 
+    import os
+
     dest_path=os.path.join(values[0], "amazon_master_output.xlsm")
+
+    import shutil
 
     shutil.copyfile(src_path, dest_path)
 
+    existing_asins = return_existing_asins(inventory_sht=xw.apps.active.books.active.sheets["Inventory"])
+
+
     return_array = []
     for product_id in product_id_to_data:
-        current_dict = product_id_to_data[product_id]
-        row = [current_dict[output_names_to_internal_names[col]] if col in output_names_to_internal_names else None for col in output_cols]
-        row[amazon_flat_loader_output_cols['product-id']] = product_id
-        return_array.append(row)
+        if product_id in existing_asins:
+            continue
+        else:
+            current_dict = product_id_to_data[product_id]
+            row = [current_dict[output_names_to_internal_names[col]] if col in output_names_to_internal_names else None for col in output_cols]
+            row[amazon_flat_loader_output_cols['product-id']] = product_id
+            return_array.append(row)
 
     xw.Book(dest_path)
     xw.apps.active.books.active.sheets["Master"]["A2"].value = return_array
 
     xw.Book(dest_path)
 
-def generate_sku(allowed_data_types = [str]):
+def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
     """
     PLACEHOLDER
     """
@@ -158,7 +200,7 @@ def generate_sku(allowed_data_types = [str]):
     input_col_name_2_address = active_cells.address
 
 
-    def sanity_check_col_entries(entry1, entry2, addresses_and_names):
+    def sanity_check_col_entries(entry1, entry2, addresses_and_names, sys=sys, importing_data_helpers=importing_data_helpers):
         #entry1 is a list of values
         #addresses_and_names is a list of tuples, first entry of tuple
         #is the address, and second is the name
@@ -200,7 +242,4 @@ def generate_sku(allowed_data_types = [str]):
 
 
 if __name__ == "__main__":
-    import PySimpleGUI as sg
-    sg.popup("hiiii")
-    export_data()
-
+    print("Uhhh")
