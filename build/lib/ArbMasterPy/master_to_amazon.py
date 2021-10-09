@@ -1,35 +1,5 @@
 import PySimpleGUI as sg
 
-def get_input_user_wrapper(input_function):
-    def wrapper(*args, **kwargs):
-        output = input_function(*args, **kwargs)
-        if output not in kwargs.get("affirmative_response"):
-            event = sg.popup_yes_no("Press 'Yes' to terminate the process, or press 'No' to repeat the last step",
-            keep_on_top=True)
-            if event == "Yes":
-                from sys import exit
-                exit()
-            else:
-                return wrapper(*args, **kwargs)
-        else:
-            return output
-    return wrapper
-
-
-@get_input_user_wrapper
-def select_name_and_click_ok_or_terminate(name, keep_on_top, affirmative_response):
-    #affirmative_response is required for the decorator to work
-    event = sg.popup(f"Please select {name} and click ok when finished",
-    keep_on_top=keep_on_top)
-    return event
-
-@get_input_user_wrapper
-def ask_to_go_to_wb_click_ok_or_terminate(name, keep_on_top, affirmative_response):
-    #affirmative_response is required for the decorator to work
-    event = sg.popup(f"Please make {name} your active Excel sheet and click ok when finished",
-    keep_on_top=keep_on_top)
-    return event
-
 
 
 def return_existing_asins(inventory_sht):
@@ -62,13 +32,6 @@ def return_existing_asins(inventory_sht):
 
 
 def export_data():
-    ask_to_go_to_wb_click_ok_or_terminate(name="the Arbitrage Master Sheet", keep_on_top=True, 
-    affirmative_response="OK")
-
-    import xlwings as xw
-
-    master_sheet = xw.apps.active.books.active.sheets.active
-
     product_id_types = {"ASIN":1,
     "ISBN":2,
     "UPC":3,
@@ -82,10 +45,28 @@ def export_data():
     col_names_to_indices = {"PRODUCT NAME":0, "ASIN":1, "ISBN":2, "UPC":3, "EAN":4, "SKU":5, "PURCHASE PRICE":6, 
                             "Qty":7, "ORDER DATE":8, "CONDITION":9, "PRICE":10}
     to_read_after_product_id = ["SKU","PURCHASE PRICE", "Qty", "ORDER DATE", "CONDITION", "PRICE"]
+    import xlwings as xw
+    default_file_loc = xw.apps.active.books.active.fullname
+    layout = [[sg.Text('Select the file location of the master sheet'), sg.Input(default_file_loc),sg.FileBrowse(key="--input_file--")],
+                [sg.OK(), sg.Cancel()]]
+    event, values = sg.Window("",layout, no_titlebar=False, keep_on_top=True, grab_anywhere=True).read(close=True)
+
+    xlsx_filename=values[0]
     
+    import io
 
+    with open(xlsx_filename, "rb") as f:
+        #this needs to be done as well as wb.close to make sure the workbook doesnt get broken by saving and other actions
+        
+        in_mem_file = io.BytesIO(f.read())
 
-    select_name_and_click_ok_or_terminate("Product Keys", keep_on_top=True, affirmative_response={"OK"})
+    import openpyxl
+
+    wb = openpyxl.load_workbook(in_mem_file, read_only=True)
+
+    master_sheet = wb["Master"]
+
+    sg.popup_ok(f"Please select the product keys for the items you wish to upload")
 
 
     current_address = xw.apps.active.books.active.selection.address
@@ -93,23 +74,20 @@ def export_data():
     from Excelutilities import index_helpers
 
     while index_helpers.is_from_single_col(current_address) == False:
-        user_output = sg.popup_yes_no("Please select from a single column block.\nClick Yes to continue and reselect, or No to terminate the program",
-        keep_on_top=True)
+        user_output = sg.popup_yes_no("Please select from a single column block.\nClick Yes to continue and reselect, or No to terminate the program")
         if user_output == "No":
             import sys
             sys.exit()
         else:
             current_address = xw.apps.active.books.active.selection.address
     
-
-
     first_and_lasts = [index_helpers.first_and_last_row_index(block) for block in current_address.split(",")]
 
     for first_row_index, last_row_index in first_and_lasts:
         
         address_for_master = "A" + str(first_row_index) + ":K"+str(last_row_index) 
-        for row in master_sheet.range(address_for_master).value:
-            values = row
+        for row in master_sheet[address_for_master]:
+            values = [cell.value for cell in row]
             product_id = None
             id_type = None
             for id_type in product_id_types_list:
@@ -134,6 +112,8 @@ def export_data():
                 current_dict[attribute] = values[col_names_to_indices[attribute]]
             
         
+    wb.close() #this needs to be done so that the workbook isn't broken. 
+
 
     amazon_flat_loader_output_cols = {'sku':0,
     'product-id':1,
@@ -211,10 +191,10 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
     """
     PLACEHOLDER
     """
-    select_name_and_click_ok_or_terminate("input product names", keep_on_top=True, affirmative_response={"OK"})
+    sg.popup_ok(f"Please select the input product names and click 'ok' when finished")
     input_col_name_1 = xw.apps.active.books.active.selection.value
     input_col_name_1_address = xw.apps.active.books.active.selection.address
-    select_name_and_click_ok_or_terminate("SKU column", keep_on_top=True, affirmative_response={"OK"})
+    sg.popup_ok(f"Please select the SKU column and click 'ok' when finished")
     active_cells = xw.apps.active.books.active.selection
     input_col_name_2 = active_cells.value
     input_col_name_2_address = active_cells.address
@@ -226,20 +206,17 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
         #is the address, and second is the name
         #implements some sanity checks
         if len(entry1) != len(entry2):
-            sg.popup("Oops! Your two input columns of data are of different lengths.\nNow terminating...",
-            keep_on_top=True)
+            sg.popup("Oops! Your two input columns of data are of different lengths.\nNow terminating...")
             sys.exit()
 
 
         for val1, val2 in zip(entry1, entry2):
             if type(val1) not in allowed_data_types and val1 != None:
-                sg.popup(f"Oops you selected some data which we couldn' recognise\nValue: {val1}",
-                keep_on_top=True)
+                sg.popup(f"Oops you selected some data which we couldn' recognise\nValue: {val1}")
                 sys.exit()
 
             if type(val2) not in allowed_data_types and val2 != None:
-                sg.popup(f"Oops you selected some data which we couldn' recognise\n{val2}\n{type(val2)}",
-                keep_on_top=True)
+                sg.popup(f"Oops you selected some data which we couldn' recognise\n{val2}\n{type(val2)}")
                 sys.exit()
         
         for address_and_name in addresses_and_names:
@@ -247,8 +224,7 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
             name = address_and_name[1]
             if not importing_data_helpers.is_col_block_bool(address):
                 print(address)
-                sg.popup(f"Oops! Your {name} data wasn't from a single column",
-                keep_on_top=True)
+                sg.popup(f"Oops! Your {name} data wasn't from a single column")
                 sys.exit()
 
     #sanity checks
@@ -266,4 +242,4 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
 
 
 if __name__ == "__main__":
-    export_data()
+    print("Uhhh")
