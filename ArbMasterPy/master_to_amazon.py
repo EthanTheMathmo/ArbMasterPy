@@ -1,5 +1,7 @@
 import PySimpleGUI as sg
 
+
+
 def get_input_user_wrapper(input_function):
     def wrapper(*args, **kwargs):
         output = input_function(*args, **kwargs)
@@ -16,6 +18,7 @@ def get_input_user_wrapper(input_function):
     return wrapper
 
 
+
 @get_input_user_wrapper
 def select_name_and_click_ok_or_terminate(name, keep_on_top, affirmative_response):
     #affirmative_response is required for the decorator to work
@@ -25,10 +28,43 @@ def select_name_and_click_ok_or_terminate(name, keep_on_top, affirmative_respons
 
 @get_input_user_wrapper
 def ask_to_go_to_wb_click_ok_or_terminate(name, keep_on_top, affirmative_response):
-    #affirmative_response is required for the decorator to work
+    #affirmative_response is required for the decorator to work and cannot be gieven a 
+    #default argument, but "OK" should always be passed in as a keyword argument for it
     event = sg.popup(f"Please make {name} your active Excel sheet and click ok when finished",
     keep_on_top=keep_on_top)
     return event
+
+@get_input_user_wrapper
+def get_file(text, affirmative_response, value_dict):
+    #to make this work with the decorator used for the other GUIs, we mutate a dictionary
+    #to return the values, and return the event
+    layout = [[sg.Text(f'Select the file location of {text}'), sg.Input(),sg.FileBrowse(key="--input_file--")],
+                [sg.OK(), sg.Cancel()]]
+    event, values = sg.Window("",layout, no_titlebar=True, keep_on_top=True, grab_anywhere=True).read(close=True)
+    value_dict["val"] = values["--input_file--"]
+    return event
+
+def open_amazon_inventory_page():
+    import webbrowser
+    webbrowser.open(r"https://sellercentral.amazon.co.uk/listing/reports/ref=xx_invreport_dnav_xx")
+
+
+
+def re_import_inventory_data():
+    value_dict = {"val":None}
+    get_file(text="the .txt inventory file you downloaded from amazon", 
+    affirmative_response="OK", value_dict=value_dict)
+    fileloc=r"C:\Users\ethan\Downloads\AllListingsReport10-07-2021.txt"
+
+    import pandas as pd
+    data = pd.read_csv(fileloc,sep="\t", header=None)
+
+    
+    ask_to_go_to_wb_click_ok_or_terminate("Arbitrage Master Sheet", 
+    keep_on_top=True, affirmative_response="OK")
+    import xlwings as xw
+    xw.apps.active.books.active.sheets["Inventory"].range("A1").options(index=False, header=False).value = data
+    return
 
 
 
@@ -266,4 +302,4 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
 
 
 if __name__ == "__main__":
-    export_data()
+    re_import_inventory_data()

@@ -2,3 +2,4 @@ xlwings==0.24.7
 Excelutilities==0.0.9
 openpyxl
 PySimpleGUI
+pandas
