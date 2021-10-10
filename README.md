@@ -4,6 +4,18 @@ Master sheet for inventory management and arbitrage on Amazon
 
 
 # TO-DO
+
+10.10.21-12.10.21
+We deployed updates successfully this sunday. James has a list of 6 features/improvements he thinks would improve the product, and is next free on wednesday to update
+these are:
+1. Build automatic amazon shipping export into the master sheet
+2. Improve aesthetics of master sheet (although - he'd try some stuff out and send back to us on this)
+3. Improve layout of ribbon buttons. (in particular, buttons which are only meant to be used on the master sheet in one place, and buttons which can be used elsewhere go elsewhere)
+4. Speed of import col needs to be imrpoved to match the other functions
+5. For shipping sheet, make sure there's a way to only select certain SKUs, as provided by his shipping centre
+6. collapsing rows by month, so they remain in the master sheet but dont use unnecessary space
+
+9.10.21
 1. redeploy to james' machine the updates
 2. easy access to ASIN data and import
 
