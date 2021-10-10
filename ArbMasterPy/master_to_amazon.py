@@ -54,7 +54,7 @@ def re_import_inventory_data():
     value_dict = {"val":None}
     get_file(text="the .txt inventory file you downloaded from amazon", 
     affirmative_response="OK", value_dict=value_dict)
-    fileloc=r"C:\Users\ethan\Downloads\AllListingsReport10-07-2021.txt"
+    fileloc=value_dict["val"]
 
     import pandas as pd
     data = pd.read_csv(fileloc,sep="\t", header=None)
@@ -321,4 +321,4 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
 
 
 if __name__ == "__main__":
-    set_python_path()
+    re_import_inventory_data()
