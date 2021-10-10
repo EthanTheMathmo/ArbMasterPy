@@ -66,7 +66,26 @@ def re_import_inventory_data():
     xw.apps.active.books.active.sheets["Inventory"].range("A1").options(index=False, header=False).value = data
     return
 
+def set_python_path():
+    import platform
+    import xlwings as xw
+    if platform.system() == "Windows":
+        addin_book = xw.Book(r"C:\Users\ethan\AppData\Roaming\Microsoft\Excel\XLSTART\master_sheet_addin.xlam")
+        value_dict = {"val":None}
+        get_file(text="location of the python EXE", affirmative_response="OK", value_dict=value_dict)
+        from pathlib import Path
+        path=Path(value_dict["val"])
+        addin_book.sheets["xlwings.conf"].range("B1").value = str(path)
 
+    elif platform.system() == "Darwin":
+        sg.popup("Implementation for Mac doesn't exist yet")
+        import sys
+        sys.exit
+    else:
+        sg.popup("Oops, we only support Mac and Windows")
+        import sys
+        sys.exit()
+        pass
 
 def return_existing_asins(inventory_sht):
     """
@@ -302,4 +321,4 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
 
 
 if __name__ == "__main__":
-    re_import_inventory_data()
+    set_python_path()
