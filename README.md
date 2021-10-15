@@ -5,6 +5,13 @@ Master sheet for inventory management and arbitrage on Amazon
 
 # TO-DO
 
+15.10.21
+call w./ james today. He has recovered from his bout of flu
+1. Explanations for how to use things properly 'I'm not sure if I was making a mistake...'
+2. re-ordering/shipment layout
+3. shipment data example now sent to us - need to implement
+4. fixing SKU bug
+
 10.10.21-12.10.21
 We deployed updates successfully this sunday. James has a list of 6 features/improvements he thinks would improve the product, and is next free on wednesday to update
 these are:
