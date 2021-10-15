@@ -43,3 +43,7 @@ def get_collapse_range_string_array():
   collapse_ranges = temp
 
   return collapse_ranges
+
+
+if __name__ == "__main__":
+    get_collapse_range_string_array()

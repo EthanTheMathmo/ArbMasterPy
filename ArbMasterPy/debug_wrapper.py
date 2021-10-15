@@ -1,8 +1,9 @@
 import traceback
+import PySimpleGUI as sg
 
 debug_on = True
 
-def debug(value):
+def debug_basic(value=debug_on):
     if value:
         def decorate(f):
             def wrap(*args, **kwargs):

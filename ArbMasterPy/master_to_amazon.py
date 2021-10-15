@@ -1,7 +1,5 @@
 import PySimpleGUI as sg
 
-
-
 def get_input_user_wrapper(input_function):
     def wrapper(*args, **kwargs):
         output = input_function(*args, **kwargs)
@@ -134,8 +132,8 @@ def export_data():
     product_id_to_data = {}
 
 
-    col_names_to_indices = {"PRODUCT NAME":0, "ASIN":1, "ISBN":2, "UPC":3, "EAN":4, "SKU":5, "PURCHASE PRICE":6, 
-                            "Qty":7, "ORDER DATE":8, "CONDITION":9, "PRICE":10}
+    col_names_to_indices = {"PRODUCT NAME":2, "ASIN":3, "ISBN":12, "UPC":13, "EAN":14, "SKU":4, "PURCHASE PRICE":6, 
+                            "Qty":8, "ORDER DATE":0, "CONDITION":9, "PRICE":11}
     to_read_after_product_id = ["SKU","PURCHASE PRICE", "Qty", "ORDER DATE", "CONDITION", "PRICE"]
     
 
@@ -146,7 +144,6 @@ def export_data():
     current_address = xw.apps.active.books.active.selection.address
 
     from Excelutilities import index_helpers
-
     while index_helpers.is_from_single_col(current_address) == False:
         user_output = sg.popup_yes_no("Please select from a single column block.\nClick Yes to continue and reselect, or No to terminate the program",
         keep_on_top=True)
@@ -162,7 +159,7 @@ def export_data():
 
     for first_row_index, last_row_index in first_and_lasts:
         
-        address_for_master = "A" + str(first_row_index) + ":K"+str(last_row_index) 
+        address_for_master = "A" + str(first_row_index) + ":O"+str(last_row_index) 
         for row in master_sheet.range(address_for_master).value:
             values = row
             product_id = None
@@ -262,11 +259,12 @@ def export_data():
 
     xw.Book(dest_path)
 
-def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
+def generate_sku(allowed_data_types = [str]):
     """
     PLACEHOLDER
     """
     select_name_and_click_ok_or_terminate("input product names", keep_on_top=True, affirmative_response={"OK"})
+    import xlwings as xw
     input_col_name_1 = xw.apps.active.books.active.selection.value
     input_col_name_1_address = xw.apps.active.books.active.selection.address
     select_name_and_click_ok_or_terminate("SKU column", keep_on_top=True, affirmative_response={"OK"})
@@ -274,7 +272,8 @@ def generate_sku( sys, importing_data_helpers, xw, allowed_data_types = [str]):
     input_col_name_2 = active_cells.value
     input_col_name_2_address = active_cells.address
 
-
+    import sys
+    
     def sanity_check_col_entries(entry1, entry2, addresses_and_names, sys=sys, importing_data_helpers=importing_data_helpers):
         #entry1 is a list of values
         #addresses_and_names is a list of tuples, first entry of tuple
