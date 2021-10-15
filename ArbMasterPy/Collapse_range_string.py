@@ -43,3 +43,5 @@ def get_collapse_range_string_array():
   collapse_ranges = temp
 
   return collapse_ranges
+
+print(get_collapse_range_string_array())
