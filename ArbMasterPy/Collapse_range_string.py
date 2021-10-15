@@ -1,5 +1,6 @@
 import xlwings as xw
 import PySimpleGUI as sg
+import datetime
 
 #Get the row
 def get_collapse_range_string_array():
@@ -28,13 +29,15 @@ def get_collapse_range_string_array():
           pass
       elif value:
           if index + 1 < len(values):
-              if values[index] == values[index+1]:
-                  temp_range = []
-                  for i in range(len(values) - (index+1)):
-                      if values[index] == values[index+i]:
-                          temp_range.append(index+i+1)
-                          checked_indices.append(index+i)
-                  collapse_ranges.append(temp_range)
+              if isinstance(values[index], datetime.datetime) and isinstance(values[index+1], datetime.datetime):
+                  if values[index].month == values[index+1].month:
+                      temp_range = []
+                      for i in range(len(values) - (index+1)):
+                          if isinstance(values[index+i], datetime.datetime):
+                              if values[index].month == values[index+i].month:
+                                  temp_range.append(index+i+1)
+                                  checked_indices.append(index+i)
+                      collapse_ranges.append(temp_range)
 
   #Change to form of "x:y" for VBA
   temp = []
@@ -43,5 +46,3 @@ def get_collapse_range_string_array():
   collapse_ranges = temp
 
   return collapse_ranges
-
-print(get_collapse_range_string_array())
