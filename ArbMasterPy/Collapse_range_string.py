@@ -39,7 +39,7 @@ def get_collapse_range_string_array():
   #Change to form of "x:y" for VBA
   temp = []
   for indices in collapse_ranges:
-      temp.append(str(indices[0])+':'str(indices[-1]))
+      temp.append(str(indices[0])+':'+str(indices[-1]))
   collapse_ranges = temp
 
   return collapse_ranges
