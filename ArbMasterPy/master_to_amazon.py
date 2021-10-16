@@ -1,5 +1,11 @@
 import PySimpleGUI as sg
 
+master_col_names_to_indices = {"PRODUCT NAME":2, "ASIN":3, "ISBN":12, "UPC":13, "EAN":14, "SKU":4, "PURCHASE PRICE":6, 
+                            "Qty":8, "ORDER DATE":0, "CONDITION":9, "PRICE":11}
+
+
+master_data_last_letter = "O"
+
 def get_input_user_wrapper(input_function):
     def wrapper(*args, **kwargs):
         output = input_function(*args, **kwargs)
@@ -113,7 +119,6 @@ def return_existing_asins(inventory_sht):
 
 
 
-
 def export_data():
     ask_to_go_to_wb_click_ok_or_terminate(name="the Arbitrage Master Sheet", keep_on_top=True, 
     affirmative_response="OK")
@@ -131,9 +136,6 @@ def export_data():
     product_id_to_data_skeleton = {"id_type":None, "PRODUCT NAME":None, "SKU":None, "Condition":None}
     product_id_to_data = {}
 
-
-    col_names_to_indices = {"PRODUCT NAME":2, "ASIN":3, "ISBN":12, "UPC":13, "EAN":14, "SKU":4, "PURCHASE PRICE":6, 
-                            "Qty":8, "ORDER DATE":0, "CONDITION":9, "PRICE":11}
     to_read_after_product_id = ["SKU","PURCHASE PRICE", "Qty", "ORDER DATE", "CONDITION", "PRICE"]
     
 
@@ -165,7 +167,7 @@ def export_data():
             product_id = None
             id_type = None
             for id_type in product_id_types_list:
-                index  = col_names_to_indices[id_type]
+                index  = master_col_names_to_indices[id_type]
                 if values[index] != None:
                     product_id = values[index]
                     id_type = product_id_types[id_type]
@@ -183,7 +185,7 @@ def export_data():
             current_dict["id_type"] = id_type
             
             for attribute in to_read_after_product_id:
-                current_dict[attribute] = values[col_names_to_indices[attribute]]
+                current_dict[attribute] = values[master_col_names_to_indices[attribute]]
             
         
 
@@ -273,7 +275,7 @@ def generate_sku(allowed_data_types = [str]):
     input_col_name_2_address = active_cells.address
 
     import sys
-    
+    from Excelutilities import importing_data_helpers
     def sanity_check_col_entries(entry1, entry2, addresses_and_names, sys=sys, importing_data_helpers=importing_data_helpers):
         #entry1 is a list of values
         #addresses_and_names is a list of tuples, first entry of tuple
@@ -319,5 +321,66 @@ def generate_sku(allowed_data_types = [str]):
     active_cells.value = [[sku_helper(product_name)] for product_name in input_col_name_1]
 
 
+def export_shipping_sheet():
+    select_name_and_click_ok_or_terminate(name="the shipping address data", keep_on_top=True,affirmative_response="OK")
+    import xlwings as xw
+    wb = xw.apps.active.books.active
+    shipping_data_block = wb.selection.value
+    sg.popup("Currently, this only works with a max of 500 ASINs")
+    asin_qty_data = wb.sheets["Shipment form"].range("A2:B502").value
+    asin_qty_data = [row for row in asin_qty_data if row != [None, None]]
+    sg.popup("This temporary solution assumes you have max 5000 ASINs in your MASTER sheet")
+    master_data = wb.sheets["Master"].range("A2:"+master_data_last_letter+ "5000").value
+    asin_index = master_col_names_to_indices["ASIN"]
+    sku_index = master_col_names_to_indices["SKU"]
+
+    asins = [row[asin_index] for row in master_data]
+    skus = [row[sku_index] for row in master_data]
+
+    asins_to_skus = dict(zip(asins, skus))
+
+    asins_without_sku = []
+
+    sku_qty_data = []
+    for row in asin_qty_data:
+        qty = row[1]
+        asin = row[0]
+        if asin in asins_to_skus:
+            sku = asins_to_skus[asin]
+            if sku != None:
+                sku_qty_data.append([sku, qty])
+            else:
+                asins_without_sku.append([asin, qty])
+        else:
+            asins_without_sku.append([asin, qty])
+
+    print(asins_without_sku)
+    sku_qty_data += asins_without_sku #i.e. all the asins with no SKUs go at the end
+
+    return_value = [["PlanName", "NOT AUTOMATED YET"], ["ShipToCountry", "UK"]] + shipping_data_block + [["AddressDistrct",None],[None,None], ["MerchantSKU", "Quantity"]] + sku_qty_data
+    
+
+    import pkg_resources
+
+    AMAZON_SHIPPING_TEMPLATE = pkg_resources.resource_filename('ArbMasterPy', 'data/CreateInboundPlanRequest.xlsx')
+    src_path = AMAZON_SHIPPING_TEMPLATE
+    layout = [[sg.Text('Select the output location of your shipping sheet'), sg.Input(),sg.FolderBrowse(key="--input_file--")],
+                [sg.OK(), sg.Cancel()]]
+    event, values = sg.Window("",layout, no_titlebar=False, keep_on_top=True, grab_anywhere=True).read(close=True)
+
+    import os
+
+    dest_path=os.path.join(values[0], "CreateInboundPlanRequest.xlsx")
+
+    import shutil
+
+    shutil.copyfile(src_path, dest_path)
+
+    xw.Book(dest_path)
+
+    xw.apps.active.books.active.sheets["Create Shipping Plan Template"]["A1"].value = return_value
+
+
+
 if __name__ == "__main__":
-    re_import_inventory_data()
+    export_shipping_sheet()
