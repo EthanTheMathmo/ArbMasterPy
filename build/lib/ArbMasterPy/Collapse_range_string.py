@@ -34,7 +34,7 @@ def get_collapse_range_string_array():
                       if values[index] == values[index+i]:
                           temp_range.append(index+i+1)
                           checked_indices.append(index+i)
-                  collapse_ranges.append(temp_range)
+              collapse_ranges.append(temp_range)
 
   #Change to form of "x:y" for VBA
   temp = []
@@ -44,4 +44,6 @@ def get_collapse_range_string_array():
 
   return collapse_ranges
 
-print(get_collapse_range_string_array())
+
+if __name__ == "__main__":
+    get_collapse_range_string_array()
