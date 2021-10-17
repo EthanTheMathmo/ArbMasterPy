@@ -13,7 +13,7 @@ def debug_basic(value):
                 except Exception as e:
                     tb = traceback.format_exc()
                     sg.Print(f'An error happened.  Here is the info:', e, tb)
-                    sg.popup_error(f'AN EXCEPTION OCCURRED!', e, tb)
+                    sg.popup_error(f'AN EXCEPTION OCCURRED!', "Please send us a screenshot of the error message to the side, and then click on the button to make it disappear")
             return wrap
 
         return decorate
