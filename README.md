@@ -5,6 +5,11 @@ Master sheet for inventory management and arbitrage on Amazon
 
 # TO-DO
 
+17.10.21
+All implemented other than the (1) explanations thing. That needs some thought
+other than that:
+TO-DO: work out the mac specific deployment bug probably involving the decorators and multiprocess
+
 15.10.21
 call w./ james today. He has recovered from his bout of flu
 1. Explanations for how to use things properly 'I'm not sure if I was making a mistake...'
