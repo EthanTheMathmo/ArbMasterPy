@@ -78,7 +78,7 @@ def open_amazon_inventory_page():
     webbrowser.open(r"https://sellercentral.amazon.co.uk/listing/reports/ref=xx_invreport_dnav_xx")
 
 
-@debug_basic(True)
+
 def re_import_inventory_data():
     value_dict = {"val":None}
     get_file(text="the .txt inventory file you downloaded from amazon", 
@@ -94,7 +94,6 @@ def re_import_inventory_data():
     import xlwings as xw
     xw.apps.active.books.active.sheets["Inventory"].range("A1").options(index=False, header=False).value = data
     return
-
 
 def set_python_path():
     import platform
@@ -144,7 +143,7 @@ def return_existing_asins(inventory_sht):
     return existing_asins
 
 
-@debug_basic(True)
+
 def export_data():
     ask_to_go_to_wb_click_ok_or_terminate(name="the Arbitrage Master Sheet", keep_on_top=True, 
     affirmative_response="OK")
@@ -287,14 +286,16 @@ def export_data():
 
     xw.Book(dest_path)
 
-def export_data_process(*args, **kwargs):
-    return export_data(*args, **kwargs)
 
 @debug_basic(True)
 def generate_sku(allowed_data_types = [str]):
     """
     PLACEHOLDER
     """
+    print("hi"+1) # TO TEST THE DEBUGGER
+
+
+
     select_name_and_click_ok_or_terminate("input product names", keep_on_top=True, affirmative_response={"OK"})
     import xlwings as xw
     input_col_name_1 = xw.apps.active.books.active.selection.value
@@ -351,13 +352,6 @@ def generate_sku(allowed_data_types = [str]):
     active_cells.value = [[sku_helper(product_name)] for product_name in input_col_name_1]
 
 
-def generate_sku_process(*args, **kwargs):
-    """
-    a wrapper to use for if the underlying function has a decorator, so we can pass into multithreading.Process
-    """
-    return generate_sku(*args, **kwargs)
-
-@debug_basic(True)
 def export_shipping_sheet():
     select_name_and_click_ok_or_terminate(name="the shipping address data", keep_on_top=True,affirmative_response="OK")
     import xlwings as xw
@@ -417,8 +411,6 @@ def export_shipping_sheet():
 
     xw.apps.active.books.active.sheets["Create Shipping Plan Template"]["A1"].value = return_value
 
-def export_shipping_sheet_process(*args, **kwargs):
-    return export_shipping_sheet(*args, **kwargs)
 
 
 if __name__ == "__main__":
