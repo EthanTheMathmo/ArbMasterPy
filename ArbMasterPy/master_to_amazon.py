@@ -115,6 +115,23 @@ def set_python_path():
         import sys
         sys.exit()
 
+def read_python_path():
+    import platform
+    import xlwings as xw
+    if platform.system() == "Windows":
+        addin_book = xw.Book(r"C:\Users\ethan\AppData\Roaming\Microsoft\Excel\XLSTART\master_sheet_addin.xlam")
+        val = addin_book.sheets["xlwings.conf"].range("B1").value
+        sg.popup(f"current value is {val}")
+
+    elif platform.system() == "Darwin":
+        sg.popup("Implementation for Mac doesn't exist yet")
+        import sys
+        sys.exit
+    else:
+        sg.popup("Oops, we only support Mac and Windows")
+        import sys
+        sys.exit()
+
 def return_existing_asins(inventory_sht):
     """
     given the inventory sheet (as an xlwings sheet object), returns a set of asins in the inventory sheet
@@ -448,4 +465,5 @@ def export_shipping_sheet_process(use_process=False):
 
 
 if __name__ == "__main__":
-   export_data_process()
+   import platform
+   print(platform.system())

@@ -6,7 +6,7 @@ requirements = ["xlwings==0.24.7","Excelutilities==0.0.11","openpyxl","PySimpleG
 
 setup(
     name="Arbitrage-Master-Sheet-Py",
-    version="0.0.16",
+    version="0.0.19",
     author="Ethan Horsfall",
     author_email="ethan.horsfall@gmail.com",
     description="Arbitrage master sheet for amazon",
