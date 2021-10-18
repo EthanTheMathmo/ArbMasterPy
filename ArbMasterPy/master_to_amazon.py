@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 
 import traceback
-import PySimpleGUI as sg
 
 
 def debug_basic(value):
@@ -115,7 +114,6 @@ def set_python_path():
         sg.popup("Oops, we only support Mac and Windows")
         import sys
         sys.exit()
-        pass
 
 def return_existing_asins(inventory_sht):
     """
@@ -123,6 +121,7 @@ def return_existing_asins(inventory_sht):
     """
     asin_rows_to_index = {"asin1":16,"asin2":17,"asin3":18}
     row_num = inventory_sht.range('A1').current_region.last_cell.row
+    sg.popup(f"row_num is {row_num}")
     existing_asins = set()
 
     if row_num == 1:
@@ -145,7 +144,7 @@ def return_existing_asins(inventory_sht):
 
 
 @debug_basic(True)
-def export_data():
+def export_data(use_Process=False):
     ask_to_go_to_wb_click_ok_or_terminate(name="the Arbitrage Master Sheet", keep_on_top=True, 
     affirmative_response="OK")
 
@@ -287,8 +286,19 @@ def export_data():
 
     xw.Book(dest_path)
 
-def export_data_process(*args, **kwargs):
-    return export_data(*args, **kwargs)
+
+def export_data_process(use_process=False):
+    import platform
+    if platform.system() == "Windows" and use_process==False:
+        from multiprocessing import Process
+        p = Process(target=export_data_process, args=(True,));p.start() #pass it into process, but with instructions now to skip the system check as we know we are using a process
+        return
+    elif platform.system() == "Darwin":
+        pass
+    else:
+        pass
+    export_data()
+    
 
 @debug_basic(True)
 def generate_sku(allowed_data_types = [str]):
@@ -350,12 +360,20 @@ def generate_sku(allowed_data_types = [str]):
      
     active_cells.value = [[sku_helper(product_name)] for product_name in input_col_name_1]
 
-
-def generate_sku_process(*args, **kwargs):
+def generate_sku_process(use_process=False):
     """
     a wrapper to use for if the underlying function has a decorator, so we can pass into multithreading.Process
     """
-    return generate_sku(*args, **kwargs)
+    import platform
+    if platform.system() == "Windows" and use_process==False:
+        from multiprocessing import Process
+        p = Process(target=generate_sku_process, args=(True,));p.start() #pass it into process, but with instructions now to skip the system check as we know we are using a process
+        return
+    elif platform.system() == "Darwin":
+        pass
+    else:
+        pass
+    generate_sku()
 
 @debug_basic(True)
 def export_shipping_sheet():
@@ -391,7 +409,6 @@ def export_shipping_sheet():
         else:
             asins_without_sku.append([asin, qty])
 
-    print(asins_without_sku)
     sku_qty_data += asins_without_sku #i.e. all the asins with no SKUs go at the end
 
     return_value = [["PlanName", "NOT AUTOMATED YET"], ["ShipToCountry", "UK"]] + shipping_data_block + [["AddressDistrct",None],[None,None], ["MerchantSKU", "Quantity"]] + sku_qty_data
@@ -417,9 +434,18 @@ def export_shipping_sheet():
 
     xw.apps.active.books.active.sheets["Create Shipping Plan Template"]["A1"].value = return_value
 
-def export_shipping_sheet_process(*args, **kwargs):
-    return export_shipping_sheet(*args, **kwargs)
+def export_shipping_sheet_process(use_process=False):
+    import platform
+    if platform.system() == "Windows" and use_process==False:
+        from multiprocessing import Process
+        p = Process(target=export_shipping_sheet_process, args=(True,));p.start() #pass it into process, but with instructions now to skip the system check as we know we are using a process
+        return
+    elif platform.system() == "Darwin":
+        pass
+    else:
+        pass
+    export_shipping_sheet()
 
 
 if __name__ == "__main__":
-   generate_sku()
+   export_data_process()
