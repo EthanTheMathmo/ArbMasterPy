@@ -45,6 +45,10 @@ def get_attribute(attr):
     asins = [row[asin_index] for row in data]
     targets = [row[target_index] for row in data]
 
+    for index, val in enumerate(targets):
+        if type(val) == float:
+            targets[index] = str(int(val))
+
     return dict(zip(asins, targets))
 
 if __name__=="__main__":
