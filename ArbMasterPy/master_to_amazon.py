@@ -68,7 +68,7 @@ def get_file(text, affirmative_response, value_dict):
     #to return the values, and return the event
     layout = [[sg.Text(f'Select the file location of {text}'), sg.Input(),sg.FileBrowse(key="--input_file--")],
                 [sg.OK(), sg.Cancel()]]
-    event, values = sg.Window("",layout, no_titlebar=True, keep_on_top=True, grab_anywhere=True).read(close=True)
+    event, values = sg.Window("",layout, keep_on_top=True, grab_anywhere=True).read(close=True)
     value_dict["val"] = values["--input_file--"]
     return event
 
