@@ -325,6 +325,10 @@ def generate_sku(allowed_data_types = [str]):
     select_name_and_click_ok_or_terminate("input product names", keep_on_top=True, affirmative_response={"OK"})
     import xlwings as xw
     input_col_name_1 = xw.apps.active.books.active.selection.value
+    asin_list = input_col_name_1
+    sku_list = []
+    asin_sku_dict = {} #Ethan
+    import datetime
     input_col_name_1_address = xw.apps.active.books.active.selection.address
     select_name_and_click_ok_or_terminate("SKU column", keep_on_top=True, affirmative_response={"OK"})
     active_cells = xw.apps.active.books.active.selection
@@ -368,14 +372,25 @@ def generate_sku(allowed_data_types = [str]):
     sanity_check_col_entries(entry1=input_col_name_1, entry2=input_col_name_2, 
                 addresses_and_names=[(input_col_name_1_address, "col_name_1"),(input_col_name_2_address, "col_name_2")])
 
-    
-    def sku_helper(product_name):
-        if product_name == None:
-            return None
+    date_time = datetime.date.today()
+    str_time = datetime.datetime.strftime(date_time, '%d-%m-%Y')
+    for asin in asin_list:
+        if asin in asin_sku_dict:
+            sku_list.append(asin_sku_dict[asin])
         else:
-            return "".join([char for char in product_name if char.isalpha()])[:15]    
+            sku_list.append(str(asin) + '-'+str_time)
+
+    active_cells.value = [sku for sku in sku_list]
+
+
+    #def sku_helper(product_name):
+    #    if product_name == None:
+    #        return None
+    #    else:
+    #        return "".join([char for char in product_name if char.isalpha()])[:15]    
      
-    active_cells.value = [[sku_helper(product_name)] for product_name in input_col_name_1]
+    #active_cells.value = [[sku_helper(product_name)] for product_name in input_col_name_1]
+
 
 def generate_sku_process(use_process=False):
     """
