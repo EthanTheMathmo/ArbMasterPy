@@ -327,7 +327,8 @@ def generate_sku(allowed_data_types = [str]):
     input_col_name_1 = xw.apps.active.books.active.selection.value
     asin_list = input_col_name_1
     sku_list = []
-    asin_sku_dict = {} #Ethan
+    from inventory_data import get_attribute
+    asin_sku_dict = get_attribute('seller-sku') #Ethan
     import datetime
     input_col_name_1_address = xw.apps.active.books.active.selection.address
     select_name_and_click_ok_or_terminate("SKU column", keep_on_top=True, affirmative_response={"OK"})
