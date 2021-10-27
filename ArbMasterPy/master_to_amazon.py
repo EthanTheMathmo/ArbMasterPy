@@ -2,6 +2,21 @@ import PySimpleGUI as sg
 
 import traceback
 
+column_mappings = {'Order Date': 0,
+ 'Order ID': 1,
+ 'Item Name': 2,
+ 'ASIN': 3,
+ 'SKU': 4,
+ 'STORE': 5,
+ 'COST PER UNIT': 6,
+ 'INDV ITEMS QTY': 7,
+ 'SELLABLE QTY': 8,
+ 'Condition': 9,
+ 'ORDER COST': 10,
+ 'PRICE': 11,
+ 'ISBN': 12,
+ 'USPC': 13,
+ 'EAN': 14}
 
 def debug_basic(value):
     if value:
