@@ -340,16 +340,23 @@ def generate_sku(allowed_data_types = [str]):
     select_name_and_click_ok_or_terminate("input product names", keep_on_top=True, affirmative_response={"OK"})
     import xlwings as xw
     input_col_name_1 = xw.apps.active.books.active.selection.value
+    input_col_name_1_address = xw.apps.active.books.active.selection.address
     asin_list = input_col_name_1
+
+
+    from get_other_row_data import get_other_row_data
+    date_list=get_other_row_data(column_mappings, curr_attr="ASIN", new_attr="Order Date", 
+    target_sheet=xw.apps.active.books.active.sheets.active,
+    target_address=input_col_name_1_address)
+    
+
     sku_list = []
     from inventory_data import get_attribute
     asin_sku_dict = get_attribute('seller-sku') #Ethan
     import datetime
-    input_col_name_1_address = xw.apps.active.books.active.selection.address
     select_name_and_click_ok_or_terminate("SKU column", keep_on_top=True, affirmative_response={"OK"})
     active_cells = xw.apps.active.books.active.selection
-    input_col_name_2 = active_cells.value
-    input_col_name_2_address = active_cells.address
+
 
     import sys
     from Excelutilities import importing_data_helpers
@@ -385,16 +392,14 @@ def generate_sku(allowed_data_types = [str]):
                 sys.exit()
 
     #sanity checks
-    sanity_check_col_entries(entry1=input_col_name_1, entry2=input_col_name_2, 
-                addresses_and_names=[(input_col_name_1_address, "col_name_1"),(input_col_name_2_address, "col_name_2")])
 
-    date_time = datetime.date.today()
-    str_time = datetime.datetime.strftime(date_time, '%d-%m-%Y')
-    for asin in asin_list:
+
+    for asin,date in zip(asin_list,date_list):
+        date = datetime.datetime.strftime(date, '%d-%m-%Y')
         if asin in asin_sku_dict:
-            sku_list.append(asin_sku_dict[asin])
+            sku_list.append([asin_sku_dict[asin]])
         else:
-            sku_list.append(str(asin) + '-'+str_time)
+            sku_list.append([str(asin) + '-'+str(date)])
 
     active_cells.value = [sku for sku in sku_list]
 
@@ -496,5 +501,4 @@ def export_shipping_sheet_process(use_process=False):
 
 
 if __name__ == "__main__":
-   import platform
-   print(platform.system())
+   generate_sku()
