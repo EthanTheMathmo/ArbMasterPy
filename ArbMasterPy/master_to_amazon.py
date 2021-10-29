@@ -65,7 +65,7 @@ def get_input_user_wrapper(input_function):
 @get_input_user_wrapper
 def select_name_and_click_ok_or_terminate(name, keep_on_top, affirmative_response):
     #affirmative_response is required for the decorator to work
-    event = sg.popup(f"Please select {name} and click ok when finished",
+    event = sg.popup(f"Please select {name} and click 'OK' when finished",
     keep_on_top=keep_on_top)
     return event
 
@@ -73,7 +73,7 @@ def select_name_and_click_ok_or_terminate(name, keep_on_top, affirmative_respons
 def ask_to_go_to_wb_click_ok_or_terminate(name, keep_on_top, affirmative_response):
     #affirmative_response is required for the decorator to work and cannot be gieven a 
     #default argument, but "OK" should always be passed in as a keyword argument for it
-    event = sg.popup(f"Please make {name} your active Excel sheet and click ok when finished",
+    event = sg.popup(f"Please make {name} your active Excel sheet and click 'OK' when finished",
     keep_on_top=keep_on_top)
     return event
 
@@ -197,7 +197,7 @@ def export_data(use_Process=False):
     
 
 
-    select_name_and_click_ok_or_terminate("Product Keys", keep_on_top=True, affirmative_response={"OK"})
+    select_name_and_click_ok_or_terminate("ASINs", keep_on_top=True, affirmative_response={"OK"})
 
 
     current_address = xw.apps.active.books.active.selection.address

@@ -11,7 +11,7 @@ def debug_basic(value):
                 except Exception as e:
                     tb = traceback.format_exc()
                     sg.Print(f'An error happened.  Here is the info:', e, tb)
-                    sg.popup_error(f'AN EXCEPTION OCCURRED!', e, tb)
+                    sg.popup_error(f'An exception has occured.', e, tb)
             return wrap
 
         return decorate
