@@ -430,15 +430,17 @@ def generate_sku_process(use_process=False):
 
 @debug_basic(True)
 def export_shipping_sheet():
+    max_num_asins_shipping = 500
+    max_num_asins_master = 5000
     select_name_and_click_ok_or_terminate(name="the shipping address data", keep_on_top=True,affirmative_response="OK")
     import xlwings as xw
     wb = xw.apps.active.books.active
     shipping_data_block = wb.selection.value
-    sg.popup("Currently, this only works with a max of 500 ASINs")
-    asin_qty_data = wb.sheets["Shipment form"].range("A2:B502").value
+    sg.popup(f"Currently, this only works with a max of {max_num_asins_shipping} ASINs")
+    asin_qty_data = wb.sheets["Shipment form"].range("A2:B"+str(2+max_num_asins_shipping)).value
     asin_qty_data = [row for row in asin_qty_data if row != [None, None]]
-    sg.popup("This temporary solution assumes you have max 5000 ASINs in your MASTER sheet")
-    master_data = wb.sheets["Master"].range("A2:"+master_data_last_letter+ "5000").value
+    sg.popup(f"This temporary solution assumes you have max {max_num_asins_master} ASINs in your MASTER sheet")
+    master_data = wb.sheets["Master"].range("A2:"+master_data_last_letter+ str(max_num_asins_master)).value
     asin_index = master_col_names_to_indices["ASIN"]
     sku_index = master_col_names_to_indices["SKU"]
 
@@ -447,8 +449,19 @@ def export_shipping_sheet():
 
     asins_to_skus = dict(zip(asins, skus))
 
+    #Now we get SKUs from inventory, and it takes priority over asins got from the master
+    max_num_asins_inventory = max_num_asins_master
+    from ArbMasterPy.inventory_data import get_attribute
+    inventory_asins_skus = get_attribute(attr='seller-sku')
+    for asin in inventory_asins_skus.keys():
+        if asin in asins_to_skus:
+            asins_to_skus[asin] = inventory_asins_skus[asin]
+
+    
+    #we keep track of all asins we couldn't find an sku for
     asins_without_sku = []
 
+    #we create an array, 2xN, with skus and qty data
     sku_qty_data = []
     for row in asin_qty_data:
         qty = row[1]
@@ -464,8 +477,14 @@ def export_shipping_sheet():
 
     sku_qty_data += asins_without_sku #i.e. all the asins with no SKUs go at the end
 
+    #RUAIRIDH
+
     return_value = [["PlanName", "NOT AUTOMATED YET"], ["ShipToCountry", "UK"]] + shipping_data_block + [["AddressDistrct",None],[None,None], ["MerchantSKU", "Quantity"]] + sku_qty_data
-    
+
+    print(f"SHIPPING DATA BLOCK IS: {shipping_data_block}")
+
+    print(f"SKU QTY DATA IS: {sku_qty_data}")
+
 
     import pkg_resources
 
@@ -501,4 +520,4 @@ def export_shipping_sheet_process(use_process=False):
 
 
 if __name__ == "__main__":
-   generate_sku()
+   export_shipping_sheet()
