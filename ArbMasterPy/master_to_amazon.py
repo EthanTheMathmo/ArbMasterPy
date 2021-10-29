@@ -464,6 +464,35 @@ def export_shipping_sheet():
 
     sku_qty_data += asins_without_sku #i.e. all the asins with no SKUs go at the end
 
+
+    matching_index = 0 #This is collecting 0th column, i.e. the ASINs (could be selected)
+    value_index = 1 #This is collecting the quantities which are added (could be selected)
+    checking_list = []
+
+    #Find all the locations
+
+    for index, row in enumerate(sku_qty_data):
+        if sku_qty_data[index][matching_index] in checking_list:
+            pass
+        else:
+            checking_list.append(sku_qty_data[index][matching_index])
+
+
+    #Produce the new values
+    temp = 0
+    outputs = []
+    for asin in checking_list:
+        for row in sku_qty_data:
+            if row[matching_index] == asin:
+                temp += row[value_index]
+        outputs.append(temp)
+        temp = 0
+
+    #Replace the sku_qty_data with the new values
+
+    sku_qty_data = [list(a) for a in zip(checking_list, outputs)]
+
+
     return_value = [["PlanName", "NOT AUTOMATED YET"], ["ShipToCountry", "UK"]] + shipping_data_block + [["AddressDistrct",None],[None,None], ["MerchantSKU", "Quantity"]] + sku_qty_data
     
 
