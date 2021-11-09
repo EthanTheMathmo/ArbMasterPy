@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 
-requirements = ["xlwings==0.24.7","Excelutilities==0.0.11","openpyxl","PySimpleGUI", "pandas"]
+requirements = ["xlwings==0.24.7","Excelutilities==0.0.11","openpyxl","PySimpleGUI", "pandas", "bs4", "google-search-results"]
 #The xlwings version has to be strict to work with the workbook setup
 
 setup(
     name="Arbitrage-Master-Sheet-Py",
-    version="0.0.20",
+    version="0.0.22",
     author="Ethan Horsfall",
     author_email="ethan.horsfall@gmail.com",
     description="Arbitrage master sheet for amazon",
