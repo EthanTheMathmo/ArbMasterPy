@@ -1,16 +1,23 @@
 import PySimpleGUI as sg
 
-from ArbMasterPy.debug_wrapper import debug_basic
+from debug_wrapper import debug_basic
 
 throttle_rate = 1.2 #to control rate of requests to server so we dont get throttled
 
 import xlwings as xw
-api_key = xw.apps.active.books.active.sheets["API"].range("A1").value
+if xw.apps.active.books.active.sheets["API"].range("A1").value is None:
+    sg.popup("No API key detected. Make sure you haven't changed the sheet called 'API'. Please contact info@dirac.software for support.")
+    exit()
 
+api_key = xw.apps.active.books.active.sheets["API"].range("A1").value
+import platform
+import os
+
+
+print(xw.apps.active.books.active.sheets["API"].range("A1").value)
 import pkg_resources
 html_save_loc = pkg_resources.resource_filename('ArbMasterPy', 'data/arbitrage_results_html.html')
 
-import os
 def newest(path):
     #from SO. Returns the newest file in a durectory
     files = os.listdir(path)
@@ -19,8 +26,20 @@ def newest(path):
 
 def get_html_code():
     from pathlib import Path
-    downloads_path = str(Path.home() / "Downloads")
-    file_loc = newest(downloads_path)
+    if platform.system() == "Darwin":
+        path = os.path.join(os.path.expanduser('~'), 'downloads')
+
+    elif platform.system() == "Windows":
+        path = str(Path.home() / "Downloads")
+
+    files = os.listdir(path)
+    paths = [os.path.join(path, basename) for basename in files]
+    html_paths = []
+    for path in paths:
+        if path[-4:] == "html":
+            html_paths.append(path)
+    file_loc = max(html_paths, key=os.path.getctime)
+
     if "SAS" not in file_loc:
         sg.popup("We couldn't recognize the most recent download - please check it and tell us what it is")
         import sys
