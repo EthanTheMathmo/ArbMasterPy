@@ -7,6 +7,9 @@ throttle_rate = 1.2 #to control rate of requests to server so we dont get thrott
 import xlwings as xw
 api_key = xw.apps.active.books.active.sheets["API"].range("A1").value
 
+import pkg_resources
+html_save_loc = pkg_resources.resource_filename('ArbMasterPy', 'data/arbitrage_results_html.html')
+
 import os
 def newest(path):
     #from SO. Returns the newest file in a durectory
@@ -188,13 +191,24 @@ def user_function():
 
     import webbrowser
 
-    f = open('display_arbitrage_results.html','w', encoding="utf-8")
+
+    f = open(html_save_loc,'w', encoding="utf-8")
 
     message = generate_html_string(best_items)
 
     f.write(message)
     f.close()
-    webbrowser.open(f.name)
+
+    import platform
+    if platform.system() == "Windows":
+        webbrowser.open(f.name)
+    elif platform.system() == "Darwin":
+        import subprocess
+        subprocess.call(('open', f.name))
+    else:
+        sg.popup("Oops, we only support Mac and Windows")
+        import sys
+        sys.exit()
     
 if __name__ == "__main__":
     user_function()
