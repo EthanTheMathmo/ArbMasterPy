@@ -18,12 +18,6 @@ print(xw.apps.active.books.active.sheets["API"].range("A1").value)
 import pkg_resources
 html_save_loc = pkg_resources.resource_filename('ArbMasterPy', 'data/arbitrage_results_html.html')
 
-def newest(path):
-    #from SO. Returns the newest file in a durectory
-    files = os.listdir(path)
-    paths = [os.path.join(path, basename) for basename in files]
-    return max(paths, key=os.path.getctime)
-
 def get_html_code():
     from pathlib import Path
     if platform.system() == "Darwin":
@@ -71,7 +65,6 @@ def get_products_and_product_names_and_names_prices(source_html_code):
     asin_elements = [element for element in b.find("div", {"id":"search-results"}).find_all("div") if element.has_attr("asin")]
 
     names_prices = [extract_name_and_max_price(asin_element) for asin_element in asin_elements]
-
 
     return products, product_names, names_prices
 
@@ -130,12 +123,12 @@ def search_shopping(search_q):
     
     return results, source_and_price_and_link_and_title, source_and_price
 
-def apply_filters_to_source_price_link(source_price_link_title, target_price, blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"]):
+def apply_filters_to_source_price_link(source_price_link_title, target_price, blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"], upper_bound, lower_bound):
     new_return = []
     
     for source, price, link,title in source_price_link_title:
         trigger_activated=False
-        if price < 0.4*target_price:
+        if price < float(lower_bound)*target_price and price > float(upper_bound)*target_price:
             continue
             
         trigger_activated = False
@@ -202,14 +195,26 @@ def user_function():
         time.sleep(throttle_rate)
     res = [x for x in res if x !=None] #remove search results where we had no results
     names_where_search_worked = set([res[j][0]["search_parameters"]["q"] for j in range(len(res))]) #get names where search results worked, so we can trim the name and price data
+
     names_prices_filtered = [x for x in names_prices_filtered if x[0] in names_where_search_worked] #i.e., only look at the results where our search had results
 
-    filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1]) for i in range(len(res))]
+    layout = [[sg.Text('Pick an upper bound compared to Amazon (e.g. 0.9 = 90%)')],
+            [sg.Input(default_text="0.9")],
+            [sg.Text('Pick an lower bound compared to Amazon (e.g. 0.4 = 40%)')],
+            [sg.Input()],
+            [sg.OK(default_text="0.4")] ]
+
+    window = sg.Window('Choose relative price-ranges', layout)
+
+    event, values = window.read()
+
+    window.close()
+
+    filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1], values[0], values[1]) for i in range(len(res))]
 
     best_items=target_items(filtered_results, names_prices_filtered)
 
     import webbrowser
-
 
     f = open(html_save_loc,'w', encoding="utf-8")
 
