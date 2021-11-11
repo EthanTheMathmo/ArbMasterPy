@@ -123,9 +123,25 @@ def search_shopping(search_q):
     
     return results, source_and_price_and_link_and_title, source_and_price
 
-def apply_filters_to_source_price_link(source_price_link_title, target_price, blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"], upper_bound, lower_bound):
+def apply_filters_to_source_price_link(source_price_link_title, target_price, blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"]):
     new_return = []
-    
+
+    layout = [[sg.Text('Pick an upper bound compared to Amazon (e.g. 0.9 = 90%)')],
+            [sg.Input(default_text="0.9")],
+            [sg.Text('Pick an lower bound compared to Amazon (e.g. 0.4 = 40%)')],
+            [sg.Input()],
+            [sg.OK(default_text="0.4")] ]
+
+    window = sg.Window('Choose relative price-ranges', layout)
+
+    event, values = window.read()
+
+    window.close()
+
+    upper_bound = values[0]
+    lower_bound = values[1]
+
+
     for source, price, link,title in source_price_link_title:
         trigger_activated=False
         if price < float(lower_bound)*target_price and price > float(upper_bound)*target_price:
@@ -166,7 +182,8 @@ def target_items(search_results_data, names_and_prices_filtered):
     return return_list
 
 def generate_html_string(best_items):
-    return_string = ""
+    return_string = "<!DOCTYPE html><html lang=\"en\"><head><link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3\" crossorigin=\"anonymous\"><title>Link Summary</title></head>"
+    return_string += "<body><header>Here are the links we could find:</header></body>"
     for row in best_items:
         return_string += f"Item: {row[0]}<br>Target Price: {row[1]}"
         return_string += "<ol>"
@@ -191,26 +208,16 @@ def user_function():
     for name, price in names_prices_filtered:
         i+=1
         res.append(search_shopping(name))
-        sg.one_line_progress_meter('One Line Meter Example', i + 1, len(names_prices_filtered))
+        sg.one_line_progress_meter('Loading...', i + 1, len(names_prices_filtered))
         time.sleep(throttle_rate)
     res = [x for x in res if x !=None] #remove search results where we had no results
     names_where_search_worked = set([res[j][0]["search_parameters"]["q"] for j in range(len(res))]) #get names where search results worked, so we can trim the name and price data
 
     names_prices_filtered = [x for x in names_prices_filtered if x[0] in names_where_search_worked] #i.e., only look at the results where our search had results
 
-    layout = [[sg.Text('Pick an upper bound compared to Amazon (e.g. 0.9 = 90%)')],
-            [sg.Input(default_text="0.9")],
-            [sg.Text('Pick an lower bound compared to Amazon (e.g. 0.4 = 40%)')],
-            [sg.Input()],
-            [sg.OK(default_text="0.4")] ]
 
-    window = sg.Window('Choose relative price-ranges', layout)
 
-    event, values = window.read()
-
-    window.close()
-
-    filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1], values[0], values[1]) for i in range(len(res))]
+    filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1]) for i in range(len(res))]
 
     best_items=target_items(filtered_results, names_prices_filtered)
 
@@ -219,7 +226,7 @@ def user_function():
     f = open(html_save_loc,'w', encoding="utf-8")
 
     message = generate_html_string(best_items)
-
+    print(html_save_loc)
     f.write(message)
     f.close()
 
