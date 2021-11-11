@@ -5,6 +5,13 @@ Master sheet for inventory management and arbitrage on Amazon
 
 # TO-DO
 
+Update of TO-DO 11.11.21
+We have now implemented basic automated arbitrage price searching, which is in use. This is the main focus. Things to implement are:
+1. server implementation (not local)
+2. queuing tasks
+3. multiple providers for speed gain?
+
+
 17.10.21
 All implemented other than the (1) explanations thing. That needs some thought
 other than that:
