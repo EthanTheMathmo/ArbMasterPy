@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Link Summary</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+</head>
+<body>
+    <h1>Here you will find all your links:</h1>
+    <ul>
+        {% for item in items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+    <ul>
+        {% for row in best_items %}
+        Item: {{ row.0 }} <br /> Target Price: {{ row.1 }}
+        <ol>
+            {% for item in row.2 %}
+            <li>Retailer: {{ item.0 }}, Price: {{ item.1 }} <a href={{ item.2 }}>Website</a> Title: {{ item.3 }}</li>
+            {% endfor %}
+        </ol>
+        {% endfor %}
+    </ul>
+    <h3>Settings</h3>
+    <h3>Blacklisted sites</h3>
+    <ul>
+        {% for site in blacklist %}
+        <li>{{ site }}</li>
+        {% endfor %}
+    </ul>
+    Any questions or queries? Email us at info@dirac.software. Most feature requests are completed within two days.
+</body>
+</html>
