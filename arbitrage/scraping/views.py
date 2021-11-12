@@ -42,8 +42,8 @@ def add_to_blacklist(request):
 
 blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
 
-#class NewSiteForm(forms.Form):
-#    site = forms.CharField(label="site")
+class NewSiteForm(forms.Form):
+    site = forms.CharField(label="site")
 
 
 
