@@ -2,5 +2,10 @@
 
 {% block body %}
     <h1>Here you will find all your links:</h1>
+    <ol>
+        {% for item in blacklist %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ol>
     <a href="{% url 'summary' %}">View Summary</a>
 {% endblock %}

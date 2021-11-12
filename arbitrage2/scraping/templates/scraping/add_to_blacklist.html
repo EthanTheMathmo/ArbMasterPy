@@ -1,7 +1,7 @@
 {% extends "scraping/layout.html" %}
 
 {% block body %}
-    <h1>Add Site TLD (e.g. ebay.com) to the Blacklist:</h1>
+    <h1>Add Site TLD (e.g. ebay.com) to the Blacklist :</h1>
     <form action="{% url 'add_to_blacklist' %}" method="post">
         {% csrf_token %}
         {{ form }}
