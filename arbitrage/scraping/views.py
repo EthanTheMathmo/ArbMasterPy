@@ -36,7 +36,7 @@ def login_view(request):
 
         if user:
             login(request, user)
-            return render(request, "scraping/index.html")
+            return render(request, "scraping/summary.html")
         # Otherwise, return login page again with new context
         else:
             return render(request, "scraping/login.html", {
