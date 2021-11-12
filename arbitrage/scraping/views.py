@@ -3,17 +3,50 @@ from django.http import HttpResponse
 from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.contrib.auth import authenticate, login, logout
+
 
 # Create your views here.
 
-def index(request):
-    return render(request, "scraping/index.html")
 
 def summary(request):
     return render(request, "scraping/summary.html", {
         "best_items": best_items,
         "blacklist": blacklist
     })
+
+def index(request):
+    # If no user is signed in, return to login page:
+    if not request.user.is_authenticated:
+        return render(request, "scraping/login.html")
+    return render(request, "scraping/index.html")
+
+def login_view(request):
+    if request.method == "POST":
+        # Accessing username and password from form data
+        username = request.POST["username"]
+        password = request.POST["password"]
+
+        # Check if username and password are correct, returning User object if so
+        user = authenticate(request, username=username, password=password)
+
+        # If user object is returned, log in and route to index page:
+
+        if user:
+            login(request, user)
+            return render(request, "scraping/index.html")
+        # Otherwise, return login page again with new context
+        else:
+            return render(request, "scraping/login.html", {
+                "message": "Invalid Credentials"
+            })
+    return render(request, "scraping/login.html")
+
+def logout_view(request):
+    logout(request)
+    return render(request, "scraping/login.html", {
+                "message": "Logged Out"
+            })
 
 def add_to_blacklist(request):
     
