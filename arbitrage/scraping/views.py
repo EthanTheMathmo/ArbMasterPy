@@ -10,6 +10,8 @@ from django.contrib.auth import authenticate, login, logout
 
 
 def summary(request):
+    if not request.user.is_authenticated:
+        return render(request, "scraping/login.html")
     return render(request, "scraping/summary.html", {
         "best_items": best_items,
         "blacklist": blacklist
@@ -49,7 +51,8 @@ def logout_view(request):
             })
 
 def add_to_blacklist(request):
-    
+    if not request.user.is_authenticated:
+        return render(request, "scraping/login.html")
     if request.method == "POST":
 
 
@@ -79,8 +82,6 @@ blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
 
 class NewSiteForm(forms.Form):
     site = forms.CharField(label="site")
-
-
 
 #So, we actually want to use the code, returning two things, some summary html and the html lines
 #This means basically return best_items
