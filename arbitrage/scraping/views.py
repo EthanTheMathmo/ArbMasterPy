@@ -4,6 +4,7 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
+from .models import Result, User
 
 
 # Create your views here.
@@ -21,7 +22,10 @@ def index(request):
     # If no user is signed in, return to login page:
     if not request.user.is_authenticated:
         return render(request, "scraping/login.html")
-    return render(request, "scraping/index.html")
+    return render(request, "scraping/index.html", {
+        "users": User.objects.all(),
+        "results": Result.objects.all()
+    })
 
 def login_view(request):
     if request.method == "POST":
@@ -77,6 +81,9 @@ def add_to_blacklist(request):
     return render(request, "scraping/add_to_blacklist.html", {
         "form": NewSiteForm()
     })
+
+
+
 
 blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
 

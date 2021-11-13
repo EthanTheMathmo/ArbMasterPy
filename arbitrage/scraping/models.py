@@ -12,7 +12,7 @@ class Result(models.Model):
     date = models.DateTimeField()
 
     def __str__(self):
-        return f"{self.id}: {self.user}. Product {self.product} for {self.source_product} at {self.price}"
+        return f"{self.id}: {self.username}. Product {self.product} for {self.source_product} at {self.price}"
 
 class User(models.Model):
     username = models.CharField(max_length=64)
