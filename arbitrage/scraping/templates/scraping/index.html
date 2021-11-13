@@ -2,5 +2,14 @@
 
 {% block body %}
     <h1>Here you will find all your links:</h1>
-    <a href="{% url 'summary' %}">View Summary</a>
+    <ol>
+        {% for user in users %}
+            <li> {{ user.username }}</li>
+        {% endfor %}
+    </ol>
+    <ul>
+        {% for result in results %}
+            <li> {{ result.product }} </li>
+        {% endfor %}
+    </ul>
 {% endblock %}

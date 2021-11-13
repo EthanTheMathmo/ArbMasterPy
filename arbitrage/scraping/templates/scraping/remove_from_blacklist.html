@@ -1,0 +1,13 @@
+{% extends "scraping/layout.html" %}
+
+{% block body %}
+    <h1>Pick a site to remove from the blacklist:</h1>
+    <form action="{% url 'remove_from_blacklist' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit">
+    </form>
+    <br />
+    <br />
+    <a href="{% url 'summary' %}">View Summary</a>
+{% endblock %}
