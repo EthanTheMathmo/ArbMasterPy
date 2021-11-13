@@ -5,9 +5,12 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 from .models import Result, User, Blacklist
+from datetime import datetime
 
 
 # Create your views here.
+
+
 
 
 def summary(request):
@@ -15,7 +18,7 @@ def summary(request):
         return render(request, "scraping/login.html")
     return render(request, "scraping/summary.html", {
         "best_items": best_items,
-        "blacklist": blacklist
+        "blacklist": blacklist,
         "database_blacklist": Blacklist.objects.all()
     })
 
@@ -60,17 +63,18 @@ def add_to_blacklist(request):
         return render(request, "scraping/login.html")
     if request.method == "POST":
 
-
         form = NewSiteForm(request.POST)
 
         if form.is_valid():
             site = form.cleaned_data["site"]
-
+            b = Blacklist(username=request.user.username, url=site)
+            b.save()
             blacklist.append(site)
 
             return render(request, "scraping/summary.html", {
                 "best_items": best_items,
-                "blacklist": blacklist
+                "blacklist": blacklist,
+                "database_blacklist": Blacklist.objects.all()
             })
 
         else:
@@ -83,13 +87,51 @@ def add_to_blacklist(request):
         "form": NewSiteForm()
     })
 
+def remove_from_blacklist(request):
+    if request.method == "POST":
+
+        form = SelectForm(request.POST)
+
+        if form.is_valid():
+            
+
+            Blacklist.objects.filter(url=form.cleaned_data["choice"]).delete()
+            
+            return render(request, "scraping/summary.html", {
+                "best_items": best_items,
+                "blacklist": blacklist,
+                "database_blacklist": Blacklist.objects.all()
+            })
+
+        else:
+
+            return render(request, "scraping/remove_from_blacklist.html", {
+                "form": form
+            })
+
+    return render(request, "scraping/remove_from_blacklist.html", {
+        "form": SelectForm(request.POST)
+    })
+
+
+BLACKLIST_CHOICES = []
+
+for site in Blacklist.objects.all():
+    BLACKLIST_CHOICES.append((site.url, site.url))
+
+
+class NewSiteForm(forms.Form):
+    site = forms.CharField(label="site")
+
+class SelectForm(forms.Form):
+    choice = forms.ChoiceField(choices = BLACKLIST_CHOICES, label="", initial='', widget=forms.Select(), required=True)
+
+
 
 
 
 blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
 
-class NewSiteForm(forms.Form):
-    site = forms.CharField(label="site")
 
 #So, we actually want to use the code, returning two things, some summary html and the html lines
 #This means basically return best_items

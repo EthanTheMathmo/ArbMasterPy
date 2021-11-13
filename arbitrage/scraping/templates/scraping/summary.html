@@ -1,29 +1,38 @@
 {% extends "scraping/layout.html" %}
 
 {% block body %}
-    <h1>Here you will find all your links:</h1>
-    <ul>
-        {% for item in items %}
-        <li>{{ item }}</li>
+<h1>Here you will find all your links:</h1>
+<ul>
+    {% for item in items %}
+    <li>{{ item }}</li>
+    {% endfor %}
+</ul>
+<ul>
+    {% for row in best_items %}
+    Item: {{ row.0 }}
+    <br /> Target Price: {{ row.1 }}
+    <ol>
+        {% for item in row.2 %}
+        <li>Retailer: {{ item.0 }}, Price: {{ item.1 }} <a href={{ item.2 }}>Website</a> Title: {{ item.3 }}</li>
         {% endfor %}
-    </ul>
-    <ul>
-        {% for row in best_items %}
-        Item: {{ row.0 }}
-        <br /> Target Price: {{ row.1 }}
-        <ol>
-            {% for item in row.2 %}
-            <li>Retailer: {{ item.0 }}, Price: {{ item.1 }} <a href={{ item.2 }}>Website</a> Title: {{ item.3 }}</li>
-            {% endfor %}
-        </ol>
-        {% endfor %}
-    </ul>
-    <h3>Settings</h3>
-    <h3>Blacklisted sites</h3>
-    <ul>
-        {% for site in blacklist %}
-        <li>{{ site }}</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url 'add_to_blacklist' %}">Add a new site to the blacklist</a>
+    </ol>
+    {% endfor %}
+</ul>
+<h3>Settings</h3>
+<h3>Blacklisted sites</h3>
+<ul>
+    {% for site in blacklist %}
+    <li>{{ site }}</li>
+    {% endfor %}
+</ul>
+<h3>Database Blacklist</h3>
+<ul>
+    {% for database_site in database_blacklist %}
+    <li>{{ database_site.url }}</li>
+    {% endfor %}
+</ul>
+<a href="{% url 'add_to_blacklist' %}">Add a new site to the blacklist</a>
+<br />
+<br />
+<a href="{% url 'remove_from_blacklist' %}">Remove a site from the blacklist</a>
 {% endblock %}
