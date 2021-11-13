@@ -4,7 +4,7 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from .models import Result, User
+from .models import Result, User, Blacklist
 
 
 # Create your views here.
@@ -16,6 +16,7 @@ def summary(request):
     return render(request, "scraping/summary.html", {
         "best_items": best_items,
         "blacklist": blacklist
+        "database_blacklist": Blacklist.objects.all()
     })
 
 def index(request):

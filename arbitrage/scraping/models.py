@@ -23,3 +23,10 @@ class User(models.Model):
 
     def __str__(self):
         return f"{self.username}"
+
+class Blacklist(models.Model):
+    username = models.CharField(max_length=64)
+    url = models.CharField(max_length=128)
+
+    def __str__(self):
+        return f"{self.username}: {self.url}"
