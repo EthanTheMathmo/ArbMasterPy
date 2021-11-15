@@ -1,0 +1,15 @@
+{% extends "scraping/layout.html" %}
+
+{% block body %}
+
+<h1>Select your file:</h1>
+<form enctype="multipart/form-data" action="{% url 'generate_results' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Save">
+</form>
+<br />
+<br />
+<a href="{% url 'summary' %}">View Summary</a>
+
+{% endblock %}
