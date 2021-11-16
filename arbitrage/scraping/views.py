@@ -331,15 +331,23 @@ def generate_results(request):
             })
 
 
-
-
     return render(request, "scraping/generate_results.html", {
         "form": form
     
     })
 
+def userpage(request):
 
-########################################################################
+    user_profile = User.objects.get(username=request.user.username)
+
+    return render(request, "scraping/userpage.html", {
+        "username": user_profile.username,
+        "requests": user_profile.requests,
+        "flagged_requests": user_profile.flagged_requests,
+        "to_be_billed": user_profile.to_be_billed
+        
+    })
+
 
 BLACKLIST_CHOICES = []
 

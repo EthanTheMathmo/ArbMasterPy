@@ -1,0 +1,21 @@
+{% extends "scraping/layout.html" %}
+
+{% block body %}
+
+<h2>Here you will find all the data and information about your profile:</h2>
+
+You are: {{ username }}
+
+<br />
+
+You have made {{ requests }} requests
+
+<br />
+
+You flagged {{ flagged_requests }} of those requests
+
+<br />
+
+You have £{{ to_be_billed }} to be billed
+
+{% endblock %}
