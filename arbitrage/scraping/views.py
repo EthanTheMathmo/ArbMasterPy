@@ -5,22 +5,43 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 from .models import Result, User, Blacklist
-from datetime import datetime
+from datetime import date, datetime
 
+#best_items indices
+best_items_indices = {"source_product":0, "target_price":1, "search_results":2}
+search_results_indices = {"retailer_name":0, "retailer_price":1, "web address":2, "product":3} 
 
 # Create your views here.
-
-
-
-
 def summary(request):
     if not request.user.is_authenticated:
         return render(request, "scraping/login.html")
-    return render(request, "scraping/summary.html", {
-        "best_items": best_items,
-        "blacklist": blacklist,
-        "database_blacklist": Blacklist.objects.all()
-    })
+    else:
+        current_date = datetime.now()
+
+        for result in best_items:
+            source_product = result[best_items_indices["source_product"]]
+            target_price = result[best_items_indices["target_price"]]
+
+            for search_result in result[best_items_indices["search_results"]]:
+                result_entry = Result()
+
+                result_entry.username = request.user.username
+                result_entry.product  = search_result[search_results_indices["product"]]
+                result_entry.retailer = search_result[search_results_indices["retailer_name"]]
+                result_entry.retailer_price = search_result[search_results_indices["retailer_price"]]
+
+                result_entry.source_product = source_product
+                result_entry.target_price = target_price
+
+                result_entry.date = current_date
+
+                result_entry.save()
+                
+        return render(request, "scraping/summary.html", {
+            "best_items": best_items,
+            "blacklist": blacklist,
+            "database_blacklist": Blacklist.objects.all()
+        })
 
 def index(request):
     # If no user is signed in, return to login page:
@@ -69,7 +90,6 @@ def add_to_blacklist(request):
             site = form.cleaned_data["site"]
             b = Blacklist(username=request.user.username, url=site)
             b.save()
-            blacklist.append(site)
 
             return render(request, "scraping/summary.html", {
                 "best_items": best_items,
@@ -136,4 +156,6 @@ blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
 #So, we actually want to use the code, returning two things, some summary html and the html lines
 #This means basically return best_items
 
-best_items = [[' Thomas & Friends 4 in Box (12, 16, 20, 24 Piece) Jigsaw Puzzles for Kids Age 3 Years and Up', 3.02, [('Poundshop.com', 1.09, 'https://www.google.com/url?url=https://www.poundshop.com/princess-palace-45-piece-puzzle.html&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECNIM&usg=AOvVaw3iQHIJeVD3UuvspaQoaU4Q', 'Grafix Princess Palace Puzzle'), ('Wish', 1.95, 'https://www.google.com/url?url=https://www.wish.com/c/5f18eba2cdebcc1eb01074c0%3Fhide_login_modal%3Dtrue%26from_ad%3Dgoog_shopping_organic%26_display_country_code%3DGB%26_force_currency_code%3DGBP%26pid%3Dgoogleadwords_int%26c%3D%257BcampaignId%257D%26ad_cid%3D5f18eba2cdebcc1eb01074c0%26ad_cc%3DGB%26ad_curr%3DGBP%26ad_price%3D2.00&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QgOUECKML&usg=AOvVaw0pNMfl8NXdwfp3i8pfmEgS', 'Early Educational Toy Developing for Children Jigsaw Digital Number 1-16 Animal ...'), ('Plaza Japan', 3.49, 'https://www.google.com/url?url=https://www.plazajapan.com/4905096251229/%3FsetCurrencyId%3D1&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECPIK&usg=AOvVaw0f8khdaeyRNNBZvlQLbSDe', 'Apollo-sha 25-122 Jigsaw Puzzle Thomas & Friends Collection of Characters (85 ...'), ('Plaza Japan', 3.49, 'https://www.google.com/url?url=https://www.plazajapan.com/4905096251236/%3FsetCurrencyId%3D1&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECIcM&usg=AOvVaw3PYOmHgeIFFJYo9g7aP6Zg', 'Apollo-sha 25-123 Jigsaw Puzzle Thomas & Friends Collection of Characters (63 ...'), ('Early Learning Centre', 5.0, 'https://www.google.com/url?url=https://www.elc.co.uk/games-jigsaws/jigsaws/jigsaw-0-49/Ravensburger-My-First-Jigsaw-Puzzle---Thomas-%2526-Friends/p/547679%3Futm_source%3Dgoogle%26utm_medium%3Dorganic%26utm_campaign%3Dorganicshopping&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECJcI&usg=AOvVaw0ki0wrM1MuVcx19iLArN5U', 'Thomas & Friends My First Jigsaw Puzzles')]], ['Ravensburger Peppa Pig London Red Bus 24 Piece Giant Shaped Floor Jigsaw Puzzle for Kids Age 3 Years Up - Educational Toys for Toddlers', 4.73, [('Wish', 1.95, 'https://www.google.com/url?url=https://www.wish.com/c/5f18eba2cdebcc1eb01074c0%3Fhide_login_modal%3Dtrue%26from_ad%3Dgoog_shopping_organic%26_display_country_code%3DGB%26_force_currency_code%3DGBP%26pid%3Dgoogleadwords_int%26c%3D%257BcampaignId%257D%26ad_cid%3D5f18eba2cdebcc1eb01074c0%26ad_cc%3DGB%26ad_curr%3DGBP%26ad_price%3D2.00&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQgOUECN4L&usg=AOvVaw0frbXB3UPL2oATENRqGNg-', 'Early Educational Toy Developing for Children Jigsaw Digital Number 1-16 Animal ...'), ('The Range', 3.49, 'https://www.google.com/url?url=https://www.therange.co.uk/toys/cards-puzzles-and-board-games/children-s-puzzles/30-piece-peppa-pig-puzzle%23322009&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQgOUECJkL&usg=AOvVaw2w6QTTb7h7rjtXimF4qgY0', 'Trefl - 30 Piece Peppa Pig Puzzle'), ('MyTrendyPhone.co.uk', 4.6, 'https://www.google.com/url?url=https://www.mytrendyphone.co.uk/shop/9-piece-jigsaw-puzzle-kids-educational-toy-269541p.html&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQguUECLUM&usg=AOvVaw1mGICjtZBSisIU1h7TfnXy', '9-Piece Jigsaw Puzzle for Kids / Educational Toy - School Bus'), ('Fab Finds', 4.99, 'https://www.google.com/url?url=https://fabfinds.co.uk/products/cbeebies-giant-number-floor-puzzle-30-pieces&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQguUECNML&usg=AOvVaw1e5WtJHbKdtMK9XvU6PWQE', 'Cbeebies - Giant Number Floor Puzzle'), ('Smyths Toys', 5.0, 'https://www.google.com/url?url=https://www.smythstoys.com/uk/en-gb/toys/products/ravensburger-peppa-pig-4-in-a-box-jigsaw-puzzle/p/164273%3Futm_source%3Dgoogle%26utm_medium%3Dorganic%26utm_campaign%3Dsurfaces_across_google&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQ_uQECIYJ&usg=AOvVaw3nkXizWejPrfiO-k-T0gD_', 'Ravensburger Peppa Pig 4 in a Box (12, 16, 20, 24 piece) Jigsaw Puzzles')]]]
+best_items = [['Posh Paws 49003 Jurassic World Camp Cretaceous Chunky Blue Velociraptor Dinosaur 10" Soft Toy (25cm)', 6.95, [('Yes Bébé', 6.27, 'https://www.google.com/url?url=https://yesbebe.co.uk/posh-paws/46502-jurassic-world-camp-cretaceous-plush-chunky-t-rex/&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjT7ubJwJv0AhWnlGoFHXhDCvgQgOUECKYL&usg=AOvVaw2xdhGVH4JAKldySu9urrQV', 'Jurassic World Camp Cretaceous Plush - Chunky T-rex'), ('Smyths Toys', 4.99, 'https://www.google.com/url?url=https://www.smythstoys.com/uk/en-gb/toys/action-figures-and-playsets/jurassic-world/jurassic-world-captivz-camp-cretaceous-slime-egg-assortment/p/197460%3Futm_source%3Dgoogle%26utm_medium%3Dorganic%26utm_campaign%3Dsurfaces_across_google&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjT7ubJwJv0AhWnlGoFHXhDCvgQ_uQECK8O&usg=AOvVaw1c23pDrnN2XYU2P7l7_wNC', 'Jurassic World Captivz Camp Cretaceous Slime Egg Assortment')]]]
+added_items_for_test=[[' Thomas & Friends 4 in Box (12, 16, 20, 24 Piece) Jigsaw Puzzles for Kids Age 3 Years and Up', 3.02, [('Poundshop.com', 1.09, 'https://www.google.com/url?url=https://www.poundshop.com/princess-palace-45-piece-puzzle.html&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECNIM&usg=AOvVaw3iQHIJeVD3UuvspaQoaU4Q', 'Grafix Princess Palace Puzzle'), ('Wish', 1.95, 'https://www.google.com/url?url=https://www.wish.com/c/5f18eba2cdebcc1eb01074c0%3Fhide_login_modal%3Dtrue%26from_ad%3Dgoog_shopping_organic%26_display_country_code%3DGB%26_force_currency_code%3DGBP%26pid%3Dgoogleadwords_int%26c%3D%257BcampaignId%257D%26ad_cid%3D5f18eba2cdebcc1eb01074c0%26ad_cc%3DGB%26ad_curr%3DGBP%26ad_price%3D2.00&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QgOUECKML&usg=AOvVaw0pNMfl8NXdwfp3i8pfmEgS', 'Early Educational Toy Developing for Children Jigsaw Digital Number 1-16 Animal ...'), ('Plaza Japan', 3.49, 'https://www.google.com/url?url=https://www.plazajapan.com/4905096251229/%3FsetCurrencyId%3D1&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECPIK&usg=AOvVaw0f8khdaeyRNNBZvlQLbSDe', 'Apollo-sha 25-122 Jigsaw Puzzle Thomas & Friends Collection of Characters (85 ...'), ('Plaza Japan', 3.49, 'https://www.google.com/url?url=https://www.plazajapan.com/4905096251236/%3FsetCurrencyId%3D1&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECIcM&usg=AOvVaw3PYOmHgeIFFJYo9g7aP6Zg', 'Apollo-sha 25-123 Jigsaw Puzzle Thomas & Friends Collection of Characters (63 ...'), ('Early Learning Centre', 5.0, 'https://www.google.com/url?url=https://www.elc.co.uk/games-jigsaws/jigsaws/jigsaw-0-49/Ravensburger-My-First-Jigsaw-Puzzle---Thomas-%2526-Friends/p/547679%3Futm_source%3Dgoogle%26utm_medium%3Dorganic%26utm_campaign%3Dorganicshopping&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjTtNrP3JD0AhW9lmoFHQdpAe8QguUECJcI&usg=AOvVaw0ki0wrM1MuVcx19iLArN5U', 'Thomas & Friends My First Jigsaw Puzzles')]], ['Ravensburger Peppa Pig London Red Bus 24 Piece Giant Shaped Floor Jigsaw Puzzle for Kids Age 3 Years Up - Educational Toys for Toddlers', 4.73, [('Wish', 1.95, 'https://www.google.com/url?url=https://www.wish.com/c/5f18eba2cdebcc1eb01074c0%3Fhide_login_modal%3Dtrue%26from_ad%3Dgoog_shopping_organic%26_display_country_code%3DGB%26_force_currency_code%3DGBP%26pid%3Dgoogleadwords_int%26c%3D%257BcampaignId%257D%26ad_cid%3D5f18eba2cdebcc1eb01074c0%26ad_cc%3DGB%26ad_curr%3DGBP%26ad_price%3D2.00&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQgOUECN4L&usg=AOvVaw0frbXB3UPL2oATENRqGNg-', 'Early Educational Toy Developing for Children Jigsaw Digital Number 1-16 Animal ...'), ('The Range', 3.49, 'https://www.google.com/url?url=https://www.therange.co.uk/toys/cards-puzzles-and-board-games/children-s-puzzles/30-piece-peppa-pig-puzzle%23322009&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQgOUECJkL&usg=AOvVaw2w6QTTb7h7rjtXimF4qgY0', 'Trefl - 30 Piece Peppa Pig Puzzle'), ('MyTrendyPhone.co.uk', 4.6, 'https://www.google.com/url?url=https://www.mytrendyphone.co.uk/shop/9-piece-jigsaw-puzzle-kids-educational-toy-269541p.html&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQguUECLUM&usg=AOvVaw1mGICjtZBSisIU1h7TfnXy', '9-Piece Jigsaw Puzzle for Kids / Educational Toy - School Bus'), ('Fab Finds', 4.99, 'https://www.google.com/url?url=https://fabfinds.co.uk/products/cbeebies-giant-number-floor-puzzle-30-pieces&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQguUECNML&usg=AOvVaw1e5WtJHbKdtMK9XvU6PWQE', 'Cbeebies - Giant Number Floor Puzzle'), ('Smyths Toys', 5.0, 'https://www.google.com/url?url=https://www.smythstoys.com/uk/en-gb/toys/products/ravensburger-peppa-pig-4-in-a-box-jigsaw-puzzle/p/164273%3Futm_source%3Dgoogle%26utm_medium%3Dorganic%26utm_campaign%3Dsurfaces_across_google&rct=j&q=&esrc=s&sa=U&ved=0ahUKEwjwq8_R3JD0AhW9kWoFHZ99CcwQ_uQECIYJ&usg=AOvVaw3nkXizWejPrfiO-k-T0gD_', 'Ravensburger Peppa Pig 4 in a Box (12, 16, 20, 24 piece) Jigsaw Puzzles')]]]
+best_items = best_items + added_items_for_test
