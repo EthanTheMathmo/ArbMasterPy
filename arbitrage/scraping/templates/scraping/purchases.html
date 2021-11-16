@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Dirac</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <style>
+        body {
+            margin: 10px;
+        }
+
+        #navbarli {
+            float: left;
+            border-right: 1px solid #bbb;
+        }
+
+        #navbara {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+            #navbara:hover {
+                background-color: #111;
+            }
+
+        #navbarul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #04052E;
+            position: fixed;
+            top: 0;
+            width: 100%;
+        }
+    </style>
+    <head>
+        <title>Subscription prices</title>
+        <script src="https://js.stripe.com/v3/">
+            let stripe = Stripe('pk_test_qblFNYngBkEdjEZ16jxxoWSM');
+            let elements = stripe.elements();
+            let card = elements.create('card', { style: style });
+            card.mount('#card-element');
+        </script>
+    </head>
+</head>
+<body>
+
+    <ul id="navbarul">
+        <li id="navbarli"><a id="navbara" href="{% url 'summary' %}">Summary</a></li>
+        <li id="navbarli"><a id="navbara" href="{% url 'add_to_blacklist' %}">Add to Blacklist</a></li>
+        <li id="navbarli"><a id="navbara" href="{% url 'userpage' %}">View your page</a></li>
+        <li id="navbarli"><a id="navbara" href="{% url 'generate_results' %}">Upload HTML</a></li>
+        <li id="navbarli" style="float:right; padding-right:20px"><a id="navbara">DIRAC</a></li>
+    </ul>
+    <br />
+    <br />
+    <br />
+
+
+    Purchases
+
+
+    <br />
+    <form id="payment-form">
+        <div id="card-element">
+            <!-- Elements will create input elements here -->
+        </div>
+
+        <!-- We'll put the error messages in this element -->
+        <div id="card-element-errors" role="alert"></div>
+        <button type="submit">Subscribe</button>
+    </form>
+
+
+    <br />
+    <br />
+    <a href="{% url 'summary' %}">View Summary</a>
+
+    <br /><br />
+
+    Any questions or queries? Email us at info@dirac.software. Most feature requests are completed within two days.
+
+</body>
