@@ -11,6 +11,7 @@ urlpatterns = [
     path("generate_results", views.generate_results, name="generate_results"),
     path("userpage", views.userpage, name="userpage"),
     path("webhook", views.webhook, name="webhook"),
-    path("purchases", views.purchases, name="purchases")
+    path("purchases", views.purchases, name="purchases"),
+    path("no_valid_results", views.no_valid_results, name="no_valid_results")
 
 ]

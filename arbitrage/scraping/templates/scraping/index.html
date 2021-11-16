@@ -1,15 +1,28 @@
 {% extends "scraping/layout.html" %}
 
 {% block body %}
-    <h1>Here you will find all your links:</h1>
-    <ol>
-        {% for user in users %}
-            <li> {{ user.username }}</li>
-        {% endfor %}
-    </ol>
-    <ul>
-        {% for result in results %}
-            <li> {{ result.product }} </li>
-        {% endfor %}
-    </ul>
+<h1>How to generate results:</h1>
+<br />
+<h3>1. Download Extension</h3>
+
+Go onto Chrome and download <a href="https://chrome.google.com/webstore/detail/save-page-we/dhhpefjklgkmgeafimnjhojgjamoafof">this</a> extension.
+<br />
+All this does scrape the HTML from the seller's page which we will then use as our source information.
+<br />
+<br />
+<h3>2. Scrape page</h3>
+
+Go onto the sellers page and, if necessary, click 'continue save'.
+<br />
+<br />
+<h3>3. Find your results</h3>
+
+Go onto the 'Upload HTML' tab.
+<br />
+Either click 'upload file' and select the html file (it should be your most recently downloaded file) or just drag and drop it.
+<br />
+<!--
+<h3>Get stats and improvements</h3>
+
+The final words...-->
 {% endblock %}

@@ -324,6 +324,8 @@ def generate_results(request):
             best_items=target_items(filtered_results, names_prices_filtered)
             best_items.sort(key=sort_best_items)
 
+            if best_items == []:
+                return render(request, "scraping/no_valid_results.html")
 
             return render(request, "scraping/summary.html", {
                 "best_items": best_items,
@@ -336,6 +338,9 @@ def generate_results(request):
         "form": form
     
     })
+
+def no_valid_results(request):
+    return render(request, "scraping/no_valid_results")
 
 def userpage(request):
 
