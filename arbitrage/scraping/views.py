@@ -1,50 +1,56 @@
+from django.db.models.query_utils import RegisterLookupMixin
 from django.shortcuts import render
 from django.http import HttpResponse
 from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from .models import Result, User, Blacklist
+from requests.sessions import Request
+from .models import Result, User, Blacklist, User_search_count
 from datetime import datetime
-import pkg_resources
-import os
-import re
-import difflib
+from .scraping_code import scraping_results
+from .forms import ReadFileForm
 
 
 #from ArbMasterPy.debug_wrapper import debug_basic
 from datetime import date, datetime
 
 #best_items indices
-best_items_indices = {"source_product":0, "target_price":1, "search_results":2}
-search_results_indices = {"retailer_name":0, "retailer_price":1, "web address":2, "product":3} 
-
+from .scraping_code import best_items_indices, search_results_indices
+ 
 # Create your views here.
-def summary(request):
+def summary(request, result_index=0):
+    #calculation_index by default is 0. Then it renders the most recent result
+    #e.g., if you set calculation_index=1, then it would render the calculation done before the most recent
     if not request.user.is_authenticated:
         return render(request, "scraping/login.html")
     else:
-        current_date = datetime.now()
+        #reconstruct best_items from the database
+        User_Info = User.objects.get(username=request.user.username)
+        current_result_count = User_Info.requests-1-result_index #as User_info.requests is always 1 ahead we adjust by -1, and then go back by the number needed to get the Nth last result
+        user_results = Result.objects.filter(username=request.user.username, result_id=current_result_count)
+        best_items = []
+        current_source_product = None
+        current_target_price = None
 
-        for result in best_items:
-            source_product = result[best_items_indices["source_product"]]
-            target_price = result[best_items_indices["target_price"]]
 
-            for search_result in result[best_items_indices["search_results"]]:
-                result_entry = Result()
+        for item in user_results:
 
-                result_entry.username = request.user.username
-                result_entry.product  = search_result[search_results_indices["product"]]
-                result_entry.retailer = search_result[search_results_indices["retailer_name"]]
-                result_entry.retailer_price = search_result[search_results_indices["retailer_price"]]
+            if current_source_product != item.source_product:
+                #add a source_product to best_items
+                current_source_product = item.source_product
+                current_target_price = item.target_price
+                best_items.append([current_source_product, current_target_price, []])
 
-                result_entry.source_product = source_product
-                result_entry.target_price = target_price
+            res = [0 for i in range(len(search_results_indices))]
+            res[search_results_indices["retailer_name"]] = item.retailer
+            res[search_results_indices["retailer_price"]] = item.retailer_price
+            res[search_results_indices["web address"]] = item.web_address
+            res[search_results_indices["product"]] = item.product
+            best_items[-1][best_items_indices["search_results"]].append(res)
 
-                result_entry.date = current_date
 
-                result_entry.save()
-                
+
         return render(request, "scraping/summary.html", {
             "best_items": best_items,
             "blacklist": blacklist,
@@ -143,177 +149,6 @@ def remove_from_blacklist(request):
 
 
 def generate_results(request):
-
-
-    
-    throttle_rate = 1.2
-    num_results_shown = 8
-    too_good_to_be_true = 0.6
-    search_param = "shop"
-    api_key = "dbb87d1b21afef383ae66bf3cd90f73ce1c96bd12eefc379f8684b6fac1f6834"
-
-
-    def asin_element_to_amazon_links(asin_element):
-    #given the asin element, extracts the link to the amazon page
-
-        return asin_element.find_all("a", {"class":"amazon-link btn btn-xs btn-primary"})[0]["href"]
-
-    def extract_name_and_max_price(asin_element):
-        name = asin_element.find("a")["data-original-title"]
-        max_price = asin_element.find("span", {"class":"qi-max-cost pseudolink"}).text
-        return (name, max_price)
-
-    def get_products_and_product_names_and_names_prices(source_html_code):
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(source_html_code, "html.parser")
-        # print(soup.get_text())
-        b=soup.body
-        products = b.find("div", {"id":"search-results"}).find_all("a")
-        def sort_function(product):
-            if product.has_attr("data-original-title"):
-                if product["data-original-title"] != "":
-                    return True
-            return False
-        
-        products = [product for product in products if sort_function(product)]
-        product_names = [product["data-original-title"] for product in products]
-
-        asin_elements = [element for element in b.find("div", {"id":"search-results"}).find_all("div") if element.has_attr("asin")]
-
-        names_prices = [extract_name_and_max_price(asin_element) for asin_element in asin_elements]
-
-        names_to_amz_link = dict(zip([name for name,price in names_prices], [asin_element_to_amazon_links(element) for element in asin_elements]))
-
-
-        return products, product_names, names_prices, names_to_amz_link
-
-    def get_price(x):
-        return float(re.search("[0-9]+[.][0-9]+", x).group())
-
-
-    def search_shopping(search_q, tbm_param="shop"):
-        from serpapi import GoogleSearch
-        import os 
-    
-        api_key = "ec63b5d769ebfe574934ac3816f218131cf92ccb461375aee6bc5926569f9933"
-    
-        if tbm_param == "shop":
-    
-            params = {
-                "engine": "google",
-                "q": search_q,
-                "location":"United Kingdom",
-                "gl": "uk",
-                "tbm": "shop",
-                "api_key": api_key,
-            }
-
-
-            search = GoogleSearch(params)
-            results = search.get_dict()
-
-            try:
-                source_and_price_and_link_and_title = [(result["source"], result["extracted_price"], result["link"], result["title"]) for result in results["shopping_results"]]
-                source_and_price_and_link_and_title.sort(key=lambda x:1-difflib.SequenceMatcher(None,x[3], search_q).ratio())
-                source_and_price = [(x[0],x[1]) for x in source_and_price_and_link_and_title]
-            except Exception as e:
-                print(e)
-                print(results)
-                return None
-        
-        elif tbm_param == "":
-            params = {
-                "engine": "google",
-                "q": search_q,
-                "location":"United Kingdom",
-                "gl": "uk",
-                "api_key": api_key,
-            }
-
-
-            search = GoogleSearch(params)
-            results = search.get_dict()
-            try:
-                organic_search = results["organic_results"]
-                source_and_price_and_link_and_title = []
-                for result in organic_search:
-                    try:
-                        #this is bad form
-                        price = result['rich_snippet']['top']['detected_extensions']['price']
-                        link = result["link"]
-                        title = result['title']
-                        source = ""
-                        source_and_price_and_link_and_title.append((source,price,link,title))                                                             
-                    except KeyError:
-                        pass
-                source_and_price_and_link_and_title.sort(key=lambda x:1-difflib.SequenceMatcher(None,x[3], search_q).ratio())
-                source_and_price = [(x[0],x[1]) for x in source_and_price_and_link_and_title]
-            except Exception as e:
-                print(e)
-                print(results)
-                return None
-
-        
-        else:
-            import sys
-            sys.exit()
-        
-    
-        return results, source_and_price_and_link_and_title, source_and_price
-
-
-
-    def apply_filters_to_source_price_link(source_price_link_title, target_price, blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"]):
-        new_return = []
-    
-        for source, price, link,title in source_price_link_title:
-            trigger_activated=False
-            if price < too_good_to_be_true*target_price or price > target_price:
-                continue
-            
-            trigger_activated = False
-            for trigger in blacklist:
-                if trigger in link.lower() or trigger in source.lower():
-                    trigger_activated=True
-                    break
-        
-            if not trigger_activated:
-                new_return.append((source, price, link, title))
-            
-        return new_return
-
-
-    def target_items(search_results_data, names_and_prices_filtered):
-        """
-        Given the results, and the names_price data we wanted to check, we return a list of those which meet the criterion
-    
-        search_results_data is a list of 3-tuples (results, source_and_price_and_link, source_and_price) of which we just need the second
-        value
-        """
-        sources_and_prices_and_links_and_titles = search_results_data
-    
-        return_list = []
-    
-        for source_price_link_title, name_price in zip(sources_and_prices_and_links_and_titles, names_and_prices_filtered):
-            target_price = name_price[1]
-            result_prices = [x[1] for x in source_price_link_title]
-        
-            if sum([price < target_price for price in result_prices[:3]])>=2:
-                #require 2 of the top 3 prices to be below 
-                return_list.append([name_price[0], name_price[1], source_price_link_title[:num_results_shown]])
-            else:
-                pass
-        
-        return return_list
-
-    def sort_best_items(row):
-        target_name = row[0]
-        best_match = row[2][0][3]
-        return 1-difflib.SequenceMatcher(None, target_name, best_match).ratio()
-
-
-
-
     form = ReadFileForm()
     if request.method == "POST":
         form = ReadFileForm(request.POST, request.FILES)
@@ -322,27 +157,15 @@ def generate_results(request):
             source_html_code = html_file.read()
             #All fine till here
             
-            products, product_names, names_prices, names_to_amz_link = get_products_and_product_names_and_names_prices(source_html_code=source_html_code)
+            throttle_rate = 1.2
+            num_results_shown = 8
+            too_good_to_be_true = 0.6
+            search_param = "shop"
+            api_key = "dbb87d1b21afef383ae66bf3cd90f73ce1c96bd12eefc379f8684b6fac1f6834"
 
-            names_prices_filtered = [x for x in names_prices if "-" not in x[1] and x[1]!="N/A"]
-
-            names_prices_filtered = [(x[0], get_price(x[1])) for x in names_prices_filtered]
-            #All fine till here
-            res=[]
-            for name, price in names_prices_filtered:
-                res.append(search_shopping(name, search_param))
-            res = [x for x in res if x !=None] #remove search results where we had no results
-            
-            #All fine till here
-            names_where_search_worked = set([res[j][0]["search_parameters"]["q"] for j in range(len(res))]) #get names where search results worked, so we can trim the name and price data
-
-            names_prices_filtered = [x for x in names_prices_filtered if x[0] in names_where_search_worked] #i.e., only look at the results where our search had results
-            
-            filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1]) for i in range(len(res))]
-            #All fine till here
-            best_items=target_items(filtered_results, names_prices_filtered)
-            best_items.sort(key=sort_best_items)
-
+            best_items= scraping_results(request=request, source_html_code=source_html_code, blacklist=blacklist, 
+            throttle_rate=throttle_rate, num_results_shown=num_results_shown, too_good_to_be_true=too_good_to_be_true, 
+            search_param=search_param, api_key=api_key)
 
             return render(request, "scraping/summary.html", {
                 "best_items": best_items,
@@ -381,13 +204,9 @@ class NewSiteForm(forms.Form):
 class SelectForm(forms.Form):
     choice = forms.ChoiceField(choices = BLACKLIST_CHOICES, label="", initial='', widget=forms.Select(), required=True)
 
-class ReadFileForm(forms.Form):
-    file = forms.FileField()
 
 
-blacklist = ["ebay.com", "etsy.com", "alibaba.com", "idealo.com", "onbuy.com"]
-
-
+blacklist = ["ebay", "etsy", "alibaba", "idealo", "onbuy"]
 #So, we actually want to use the code, returning two things, some summary html and the html lines
 #This means basically return best_items
 
