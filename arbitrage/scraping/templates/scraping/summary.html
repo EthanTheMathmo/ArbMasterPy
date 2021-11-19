@@ -1,5 +1,5 @@
 {% extends "scraping/layout.html" %}
-
+{% load dynamically_read_best_items %}
 {% block body %}
 <h1>Here you will find all your links:</h1>
 <ul>
@@ -7,17 +7,25 @@
     <li>{{ item }}</li>
     {% endfor %}
 </ul>
+{% for best_items in best_items_list %}
 <ul>
     {% for row in best_items %}
-    Item: {{ row.0 }}
-    <br /> Target Price: {{ row.1 }}
+    Item: {{ row|return_source_product }}
+    <br /> Target Price: {{ row|return_target_price }}
+    <br /> <a href={{ row|return_amz_link }}>Amazon link</a>
     <ol>
-        {% for item in row.2 %}
-        <li>Retailer: {{ item.0 }}, Price: {{ item.1 }} <a href={{ item.2 }}>Website</a> Title: {{ item.3 }}</li>
+        {% for item in row|return_search_results %}
+        <li>Retailer: {{ item|return_retailer_name }}, Price: {{ item|return_retailer_price }} <a href={{ item|return_web_address }}>Website</a> Title: {{ item|return_product }}</li>
         {% endfor %}
     </ol>
+    <br>
     {% endfor %}
 </ul>
+<hr>
+<br>
+<br>
+{% endfor %}
+
 <h3>Settings</h3>
 <h3>Blacklisted sites</h3>
 <ul>
