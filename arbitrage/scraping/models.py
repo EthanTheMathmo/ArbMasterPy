@@ -28,6 +28,7 @@ class Result(models.Model):
     asin = models.CharField(max_length=64)
     result_id = models.IntegerField()
     web_address = models.CharField(max_length=512)
+    amz_link = models.CharField(max_length=512)
 
     def __str__(self):
         return f"""{self.id}: {self.username}.\nProduct {self.product[:20]} for {self.source_product[:20]}.\nTarget price: {self.target_price}. Price: {self.retailer_price}

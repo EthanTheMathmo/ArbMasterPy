@@ -5,7 +5,7 @@ from .models import Result, User, User_search_count
 from requests.sessions import Request
 
 #best_items indices
-best_items_indices = {"source_product":0, "target_price":1, "search_results":2} 
+best_items_indices = {"source_product":0, "target_price":1, "amz_link":2, "search_results":3} 
         #source product is amazon item, 
 search_results_indices = {"retailer_name":0, "retailer_price":1, "web address":2, "product":3} 
 
@@ -140,7 +140,7 @@ def apply_filters_to_source_price_link(source_price_link_title, target_price,too
     return new_return
 
 
-def target_items(search_results_data, names_and_prices_filtered, num_results_shown):
+def target_items(search_results_data, names_and_prices_filtered, num_results_shown, names_to_amz_link):
     """
     Given the results, and the names_price data we wanted to check, we return a list of those which meet the criterion
 
@@ -157,15 +157,15 @@ def target_items(search_results_data, names_and_prices_filtered, num_results_sho
     
         if sum([price < target_price for price in result_prices[:3]])>=2:
             #require 2 of the top 3 prices to be below 
-            return_list.append([name_price[0], name_price[1], source_price_link_title[:num_results_shown]])
+            return_list.append([name_price[0], name_price[1], names_to_amz_link[name_price[0]],source_price_link_title[:num_results_shown]])
         else:
             pass
     
     return return_list
 
 def sort_best_items(row):
-    target_name = row[0]
-    best_match = row[2][0][3]
+    target_name = row[best_items_indices["source_product"]]
+    best_match = row[best_items_indices["search_results"]][0][search_results_indices["product"]]
     return 1-difflib.SequenceMatcher(None, target_name, best_match).ratio()
 
 
@@ -193,7 +193,7 @@ def scraping_results(request, source_html_code, blacklist, throttle_rate,
     
     filtered_results = [apply_filters_to_source_price_link(source_price_link_title=res[i][1], target_price=names_prices_filtered[i][1], too_good_to_be_true=too_good_to_be_true, blacklist=blacklist) for i in range(len(res))]
     #All fine till here
-    best_items=target_items(filtered_results, names_prices_filtered, num_results_shown=num_results_shown)
+    best_items=target_items(filtered_results, names_prices_filtered, num_results_shown=num_results_shown, names_to_amz_link=names_to_amz_link)
     best_items.sort(key=sort_best_items)
 
     #updating databases
@@ -217,6 +217,8 @@ def scraping_results(request, source_html_code, blacklist, throttle_rate,
             result_entry.retailer = search_result[search_results_indices["retailer_name"]]
             result_entry.retailer_price = search_result[search_results_indices["retailer_price"]]
             result_entry.web_address = search_result[search_results_indices["web address"]]
+            
+            result_entry.amz_link = names_to_amz_link[source_product]
 
             result_entry.source_product = source_product
             result_entry.target_price = target_price

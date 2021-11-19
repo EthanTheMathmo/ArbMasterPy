@@ -18,6 +18,10 @@ from datetime import date, datetime
 #best_items indices
 from .scraping_code import best_items_indices, search_results_indices
  
+from django import template
+
+
+
 # Create your views here.
 def summary(request, result_index=0):
     #calculation_index by default is 0. Then it renders the most recent result
@@ -33,6 +37,8 @@ def summary(request, result_index=0):
         current_source_product = None
         current_target_price = None
 
+        if len(user_results)==0:
+            return HttpResponse("Oops - the result count seems to have lost sync or the last result had no entries")
 
         for item in user_results:
 
@@ -40,19 +46,26 @@ def summary(request, result_index=0):
                 #add a source_product to best_items
                 current_source_product = item.source_product
                 current_target_price = item.target_price
-                best_items.append([current_source_product, current_target_price, []])
+                amz_link = item.amz_link
+                best_items.append([current_source_product, current_target_price, amz_link, []])
 
             res = [0 for i in range(len(search_results_indices))]
             res[search_results_indices["retailer_name"]] = item.retailer
             res[search_results_indices["retailer_price"]] = item.retailer_price
             res[search_results_indices["web address"]] = item.web_address
             res[search_results_indices["product"]] = item.product
-            best_items[-1][best_items_indices["search_results"]].append(res)
+            try:
+                best_items[-1][best_items_indices["search_results"]].append(res)
+            except:
+                return HttpResponse(best_items)
 
 
 
         return render(request, "scraping/summary.html", {
-            "best_items": best_items,
+            "source_product_index":best_items_indices["source_product"],
+            "target_price_index":best_items_indices["target_price"],
+            "amz_link_index":best_items_indices["amz_link"],
+            "best_items_list": [best_items],
             "blacklist": blacklist,
             "database_blacklist": Blacklist.objects.all()
         })
@@ -149,35 +162,50 @@ def remove_from_blacklist(request):
 
 
 def generate_results(request):
+    from .forms import max_file_uploads
     form = ReadFileForm()
+
+
     if request.method == "POST":
         form = ReadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            html_file = request.FILES['file']
-            source_html_code = html_file.read()
-            #All fine till here
-            
-            throttle_rate = 1.2
-            num_results_shown = 8
-            too_good_to_be_true = 0.6
-            search_param = "shop"
-            api_key = "dbb87d1b21afef383ae66bf3cd90f73ce1c96bd12eefc379f8684b6fac1f6834"
+        best_items_list = [] # will contain all the best_items
+        # return HttpResponse(request.FILES['5 file upload'])
 
-            best_items= scraping_results(request=request, source_html_code=source_html_code, blacklist=blacklist, 
-            throttle_rate=throttle_rate, num_results_shown=num_results_shown, too_good_to_be_true=too_good_to_be_true, 
-            search_param=search_param, api_key=api_key)
+        if form.is_valid():
+            form_keys = [f"file_{str(i)}" for i in range(max_file_uploads)]
+            if not any([form_key in request.FILES for form_key in form_keys]):
+                #make sure that at least one form entry is filled out
+                return HttpResponse("Oops, you didn't upload any files")
+            
+            for form_key in form_keys:
+                if form_key in request.FILES:
+                    html_file = request.FILES[form_key]
+                    source_html_code = html_file.read()                
+                    throttle_rate = 1.2
+                    num_results_shown = 8
+                    too_good_to_be_true = 0.6
+                    search_param = "shop"
+                    api_key = "dbb87d1b21afef383ae66bf3cd90f73ce1c96bd12eefc379f8684b6fac1f6834"
+
+                    best_items= scraping_results(request=request, source_html_code=source_html_code, blacklist=blacklist, 
+                    throttle_rate=throttle_rate, num_results_shown=num_results_shown, too_good_to_be_true=too_good_to_be_true, 
+                    search_param=search_param, api_key=api_key)
+                    best_items_list.append(best_items)
+                else:
+                    #if this form entry isn't filled out, we continue
+                    continue
 
             return render(request, "scraping/summary.html", {
-                "best_items": best_items,
+                "best_items_list": best_items_list,
                 "blacklist": blacklist,
                 "database_blacklist": Blacklist.objects.all()
             })
 
-
-    return render(request, "scraping/generate_results.html", {
-        "form": form
-    
-    })
+    else:
+        return render(request, "scraping/generate_results.html", {
+            "form": form
+        
+        })
 
 def userpage(request):
 
